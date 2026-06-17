@@ -240,7 +240,8 @@ body.app-ready .launch-screen-core {
   padding: 18px;
   overflow-y: auto;
   background:
-    radial-gradient(circle at top, rgba(37, 110, 95, 0.3), transparent 34%),
+    radial-gradient(circle at 16% 10%, rgba(232, 181, 102, 0.16), transparent 28rem),
+    radial-gradient(circle at 84% 8%, rgba(114, 211, 136, 0.16), transparent 26rem),
     linear-gradient(180deg, #031310 0%, #051b17 100%);
 }
 
@@ -249,12 +250,14 @@ body.app-ready .launch-screen-core {
 }
 
 .auth-shell {
-  max-width: 460px;
+  width: min(100%, 1040px);
+  max-width: 1040px;
   margin: 0 auto;
   display: grid;
   gap: 18px;
   min-height: calc(100vh - 36px);
   align-items: center;
+  justify-items: center;
 }
 
 .auth-panel,
@@ -272,9 +275,10 @@ body.app-ready .launch-screen-core {
 }
 
 .auth-panel-compact {
-  max-width: 400px;
+  width: min(100%, 460px);
+  max-width: 460px;
   margin: 0 auto;
-  min-height: 760px;
+  min-height: auto;
 }
 
 .auth-brand-mark {
@@ -365,7 +369,7 @@ body.app-ready .launch-screen-core {
   margin: 12px 0 0;
   text-align: center;
   line-height: 1.5;
-  min-height: 72px;
+  min-height: 0;
 }
 
 .auth-toggle strong {
@@ -565,6 +569,48 @@ body.app-ready .launch-screen-core {
 
 .auth-social-button.google {
   background: linear-gradient(135deg, rgba(232, 181, 102, 0.18), rgba(120, 88, 214, 0.22));
+}
+
+.auth-choice-stack {
+  margin-top: 22px;
+}
+
+.auth-choice-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.auth-choice-actions .gold-button,
+.auth-choice-actions .secondary-button {
+  width: 100%;
+  min-height: 50px;
+}
+
+.auth-partner-entry {
+  width: 100%;
+  margin-top: 14px;
+  padding: 15px 18px;
+  border: 1px solid rgba(247, 231, 200, 0.18);
+  border-radius: 20px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  color: var(--cream);
+  background:
+    linear-gradient(135deg, rgba(114, 211, 136, 0.14), rgba(5, 24, 22, 0.74)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.auth-partner-entry span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auth-partner-entry strong {
+  font-size: 16px;
 }
 
 .auth-divider {
@@ -7534,6 +7580,25 @@ body.app-launching .phone-shell {
 }
 
 @media (max-width: 430px) {
+  .auth-entry {
+    padding: 12px;
+  }
+
+  .auth-panel,
+  .pin-panel {
+    border-radius: 26px;
+    padding: 24px 18px 20px;
+  }
+
+  .auth-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel h1,
+  .pin-panel h1 {
+    font-size: 30px;
+  }
+
   .quick-grid,
   .feed-preview-grid,
   .partner-mini-grid,
@@ -7620,16 +7685,48 @@ body.app-launching .phone-shell {
 }
 
 @media (min-width: 1025px) {
+  :root {
+    --page-x: clamp(24px, 3.2vw, 44px);
+  }
+
+  body {
+    padding: 0;
+  }
+
   .phone-shell {
-    max-width: min(100vw, 1180px);
+    width: 100%;
+    max-width: none;
     min-height: 100vh;
-    border-radius: 32px;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .content,
   .screen-inner {
-    max-width: 1120px;
+    max-width: 1180px;
     margin: 0 auto;
+  }
+
+  .hero {
+    min-height: 520px;
+    border-radius: 0 0 36px 36px;
+    --weather-card-top: calc(var(--ios-top-buffer) + 160px);
+    --weather-card-width: 236px;
+    --search-card-gap: 178px;
+  }
+
+  .hero-copy {
+    max-width: 620px;
+    margin-top: 72px;
+  }
+
+  .hero-copy h1 {
+    max-width: 760px;
+    font-size: clamp(44px, 5vw, 72px);
+  }
+
+  .search-shell {
+    max-width: 680px;
   }
 
   .quick-grid,
@@ -7638,6 +7735,19 @@ body.app-launching .phone-shell {
   .tech-grid,
   .plus-benefit-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .category-row.core-services {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .bottom-nav {
+    width: min(720px, calc(100vw - 48px));
+  }
+
+  .utility-nav {
+    left: max(24px, calc((100vw - 1180px) / 2));
+    transform: none;
   }
 }
 

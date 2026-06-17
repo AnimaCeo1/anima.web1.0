@@ -1280,6 +1280,7 @@ function lockPin() {
 function showAuth(view, extra = {}) {
   Object.assign(authState, extra);
   authState.view = view;
+  if (phoneShell) phoneShell.hidden = true;
   authEntry.hidden = false;
   renderAuthEntry();
 }
@@ -1291,6 +1292,7 @@ function hideAuth() {
 function authTitle(view) {
   const ru = userSettings.language === "Russian";
   const titles = {
+    choice: ru ? "Вход в ANIMA" : "Enter ANIMA",
     login: ru ? "Вход" : "Sign in",
     register: ru ? "Регистрация" : "Create account",
     "register-code": ru ? "Подтвердите почту" : "Verify email",
@@ -1305,7 +1307,7 @@ function renderAuthEntry() {
   if (!authEntry || authEntry.hidden) return;
   const view = authState.view;
   const ru = userSettings.language === "Russian";
-  const compactView = view === "login" || view === "register" || view === "register-code" || view === "login-code";
+  const compactView = view === "choice" || view === "login" || view === "register" || view === "register-code" || view === "login-code";
   const codeBox = authState.mailFallbackCode
     ? `<div class="auth-demo-code">${ru ? "Демо-код для локального запуска" : "Demo code for local build"}: <strong>${authState.pendingRegistration?.code || authState.pendingLogin?.code}</strong></div>`
     : "";
@@ -1314,7 +1316,7 @@ function renderAuthEntry() {
       <section class="${view.startsWith("pin") ? "pin-panel" : "auth-panel"} ${compactView ? "auth-panel-compact" : ""}">
         <div class="auth-topbar-row">
           <button class="auth-language-switch" type="button" data-auth-language>${userSettings.language === "Russian" ? "RU" : "EN"}</button>
-          <button class="auth-guest-link" type="button" data-auth-guest>${ru ? "Войти как гость" : "Continue as guest"}</button>
+          <button class="auth-guest-link" type="button" data-auth-guest>${ru ? "Гостевой вход" : "Guest access"}</button>
         </div>
         ${view.startsWith("pin") ? "" : `<div class="auth-avatar-glow"><div class="auth-avatar-core">A</div></div>`}
         <img class="auth-brand-mark" src="./assets/anima-wordmark.png" alt="ANIMA" />
@@ -1373,6 +1375,34 @@ function renderAuthBody(view, codeBox) {
       <span class="auth-social-icon" aria-hidden="true">${icon}</span>
     </button>
   `;
+  if (view === "choice") {
+    return `
+      <p class="auth-note">${ru ? "Выберите способ входа: Telegram, Google, аккаунт ANIMA по почте или кабинет партнёра." : "Choose Telegram, Google, ANIMA email account or partner dashboard access."}</p>
+      <div class="auth-social-stack auth-choice-stack">
+        ${socialButton("telegram", "Telegram", ru ? "Быстрый вход через Telegram" : "Fast sign-in with Telegram", `
+          <svg viewBox="0 0 24 24">
+            <path d="M21.2 4.4 18 19.5c-.2 1-.8 1.3-1.7.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.3L5.6 13 1 11.6c-1-.3-1-1 .2-1.5L19.3 3c.9-.3 1.6.2 1.9 1.4Z" />
+          </svg>
+        `)}
+        ${socialButton("google", "Google", ru ? "Войти или зарегистрироваться через Google" : "Sign in or create account with Google", `
+          <svg viewBox="0 0 24 24">
+            <path d="M21.8 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.5c-.2 1.2-.9 2.3-1.9 3v2.5h3.1c1.8-1.6 3.1-4 3.1-7.2Z" />
+            <path d="M12 22c2.7 0 5-.9 6.7-2.5l-3.1-2.5c-.9.6-2 .9-3.6.9-2.8 0-5.1-1.9-5.9-4.4H2.9V16c1.7 3.5 5.3 6 9.1 6Z" />
+            <path d="M6.1 13.5c-.2-.6-.4-1.2-.4-1.9s.1-1.3.4-1.9V7.2H2.9C2.3 8.5 2 10 2 11.6s.3 3.1.9 4.4l3.2-2.5Z" />
+            <path d="M12 5.3c1.5 0 2.8.5 3.8 1.5l2.8-2.8C17 2.5 14.7 1.6 12 1.6c-3.8 0-7.4 2.5-9.1 6l3.2 2.5c.8-2.5 3.1-4.8 5.9-4.8Z" />
+          </svg>
+        `)}
+      </div>
+      <div class="auth-choice-actions">
+        <button class="gold-button auth-primary-button" type="button" data-auth-view="register">${ru ? "Создать аккаунт ANIMA" : "Create ANIMA account"}</button>
+        <button class="secondary-button" type="button" data-auth-view="login">${ru ? "У меня уже есть аккаунт" : "I already have an account"}</button>
+      </div>
+      <button class="auth-partner-entry" type="button" data-auth-partner>
+        <span>${ru ? "Вход для партнёров" : "Partner dashboard"}</span>
+        <strong>${ru ? "Открыть кабинет партнёра" : "Open partner cabinet"}</strong>
+      </button>
+    `;
+  }
   if (view === "login") {
     return `
       <p class="auth-note">${ru ? "Вход по почте или @username. Если включена 2FA, дальше запросим код." : "Sign in by email or @username."}</p>
@@ -1515,6 +1545,9 @@ function bindAuthActions() {
   authEntry.querySelector("[data-auth-language]")?.addEventListener("click", () => {
     setLanguage(userSettings.language === "Russian" ? "English" : "Russian");
     renderAuthEntry();
+  });
+  authEntry.querySelector("[data-auth-partner]")?.addEventListener("click", () => {
+    window.location.href = "./partner.html";
   });
   authEntry.querySelector("[data-auth-guest]")?.addEventListener("click", () => {
     saveGuestSession();
@@ -1804,15 +1837,8 @@ function finishGuestMode() {
 function startAuthFlow() {
   perfRun("startAuthFlow", () => {
     refreshCurrentAuthUser();
-    if (isGuestSession()) {
-      phoneShell.hidden = false;
-      finishGuestMode();
-      return;
-    }
     if (!currentAuthUser) {
-      saveGuestSession();
-      phoneShell.hidden = false;
-      finishGuestMode();
+      showAuth("choice", { error: "", pinBuffer: "", firstPin: "", pinPurpose: "setup" });
       return;
     }
     applyCurrentAuthUser();
