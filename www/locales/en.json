@@ -1,0 +1,50 @@
+{
+  "common": {
+    "home": "Home",
+    "feed": "Feed",
+    "saved": "Saved",
+    "profile": "Profile",
+    "back": "Back",
+    "seeAll": "See all",
+    "openFeed": "Open Feed",
+    "view": "View",
+    "viewDetails": "View details",
+    "save": "Save",
+    "share": "Share",
+    "directions": "Directions",
+    "contactManager": "Contact manager",
+    "sendRequest": "Send request",
+    "done": "Done"
+  },
+  "home": {
+    "goodMorning": "Good morning,",
+    "welcome": "Welcome to Dalat",
+    "subtitle": "Your digital ecosystem for exploring Dalat.",
+    "search": "Search places, services, experiences...",
+    "mainSections": "Main Sections",
+    "trending": "Trending in Dalat",
+    "ecosystem": "ANIMA Ecosystem",
+    "partners": "Our Partners",
+    "social": "Connect With Us"
+  },
+  "weather": {
+    "label": "Current weather",
+    "loading": "Loading weather...",
+    "unavailable": "Weather temporarily unavailable",
+    "feelsLike": "Feels like",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "updated": "Updated"
+  },
+  "profile": {
+    "language": "Language",
+    "english": "English",
+    "russian": "Russian",
+    "currency": "Currency",
+    "preferences": "Preferences",
+    "support": "Support & Ecosystem",
+    "about": "About ANIMA",
+    "partners": "Our Partners",
+    "contact": "Contact Us"
+  }
+}

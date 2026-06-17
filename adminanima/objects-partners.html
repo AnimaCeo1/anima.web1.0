@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ANIMA Админка · Объекты и партнёры</title>
+    <link rel="stylesheet" href="./admin.css?v=objects-partners-1" />
+  </head>
+  <body class="dashboard-home-body objects-partners-body" data-page="objects-partners">
+    <main class="dashboard-home-shell">
+      <aside class="dashboard-sidebar" data-sidebar>
+        <div class="dashboard-sidebar-scroll">
+          <a class="dashboard-brand" href="./dashboard.html" aria-label="ANIMA home">
+            <img src="../assets/anima-wordmark.png" alt="ANIMA" />
+          </a>
+          <nav class="sidebar-groups" data-sidebar-nav></nav>
+        </div>
+        <button type="button" class="sidebar-collapse-button" data-sidebar-toggle>
+          <span class="sidebar-collapse-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
+          </span>
+          <span>Свернуть меню</span>
+        </button>
+      </aside>
+
+      <section class="dashboard-content objects-content">
+        <header class="dashboard-topbar">
+          <div class="topbar-left">
+            <button type="button" class="topbar-icon-button" data-sidebar-toggle aria-label="Открыть меню">
+              <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            </button>
+            <label class="dashboard-search">
+              <span class="dashboard-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l5 5" /></svg>
+              </span>
+              <input type="search" placeholder="Поиск по объектам, партнёрам..." data-global-search />
+              <span class="dashboard-search-shortcut">⌘K</span>
+            </label>
+          </div>
+          <div class="topbar-right" data-topbar-right></div>
+        </header>
+
+        <section class="objects-page-hero">
+          <div>
+            <h1>Объекты и партнёры</h1>
+            <p>Управление объектами размещения и партнёрской сетью</p>
+          </div>
+          <div class="objects-hero-actions">
+            <button type="button" class="hero-action-button hero-action-red" data-open-incoming>Входящие запросы</button>
+            <button type="button" class="hero-action-button hero-action-green" data-add-object>+ Добавить объект</button>
+            <button type="button" class="hero-action-button hero-action-blue" data-add-partner>+ Добавить партнёра</button>
+          </div>
+        </section>
+
+        <section class="objects-kpis" data-objects-kpis></section>
+
+        <section class="objects-filters">
+          <label class="filter-field filter-search-field">
+            <span class="dashboard-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l5 5" /></svg>
+            </span>
+            <input type="search" placeholder="Поиск по объектам..." data-filter-search />
+          </label>
+          <label class="filter-field">
+            <select data-filter-status></select>
+          </label>
+          <label class="filter-field">
+            <select data-filter-type></select>
+          </label>
+          <label class="filter-field">
+            <select data-filter-partner></select>
+          </label>
+          <button type="button" class="filter-action-button" data-open-filters>Фильтры <span>⌄</span></button>
+          <button type="button" class="filter-icon-button" data-reset-filters aria-label="Сбросить фильтры">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4" /></svg>
+          </button>
+        </section>
+
+        <section class="objects-category-tabs" data-category-tabs></section>
+
+        <section class="bulk-toolbar" data-bulk-toolbar hidden></section>
+
+        <section class="objects-page-grid">
+          <article class="dashboard-card objects-table-card">
+            <header class="card-header">
+              <h2>Список объектов</h2>
+            </header>
+            <div class="objects-table-state" data-objects-state></div>
+            <div class="objects-table-wrap" data-objects-table-wrap hidden>
+              <div class="objects-table" data-objects-table></div>
+              <div class="objects-table-footer" data-objects-footer></div>
+            </div>
+          </article>
+
+          <article class="dashboard-card partners-side-card">
+            <header class="card-header">
+              <h2>Список партнёров</h2>
+              <button type="button" class="card-link-button" data-view-all-partners>Смотреть всех</button>
+            </header>
+            <div class="partners-side-state" data-partners-state></div>
+            <div class="partners-side-list" data-partners-list></div>
+            <div class="partners-side-footer">
+              <span data-partners-footer></span>
+              <button type="button" class="card-link-button" data-view-all-partners-bottom>Смотреть всех партнёров</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="entity-detail-grid">
+          <article class="dashboard-card entity-detail-card">
+            <header class="card-header">
+              <h2 data-detail-title>Детали</h2>
+              <button type="button" class="card-link-button" data-clear-detail hidden>Закрыть</button>
+            </header>
+            <div data-entity-detail></div>
+          </article>
+          <article class="dashboard-card drafts-card">
+            <header class="card-header">
+              <h2>Черновики</h2>
+            </header>
+            <div data-drafts-panel></div>
+          </article>
+        </section>
+
+        <section class="objects-bottom-grid">
+          <article class="dashboard-card quick-actions-card">
+            <header class="card-header"><h2>Быстрые действия</h2></header>
+            <div class="quick-actions-grid">
+              <button type="button" class="quick-action-item quick-action-green" data-add-object>
+                <strong>Добавить объект</strong>
+                <span>Опубликовать новый объект размещения</span>
+              </button>
+              <button type="button" class="quick-action-item quick-action-blue" data-add-partner>
+                <strong>Добавить партнёра</strong>
+                <span>Пригласить нового партнёра</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="dashboard-card moderation-card">
+            <header class="card-header"><h2>Ожидающие модерации</h2></header>
+            <div class="moderation-stats" data-moderation-stats></div>
+          </article>
+
+          <article class="dashboard-card export-card">
+            <header class="card-header"><h2>Экспорт данных</h2></header>
+            <p>Выгрузите отчёты по объектам и партнёрам</p>
+            <button type="button" class="export-button" data-export>Экспортировать</button>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <div class="dashboard-toast" data-dashboard-toast hidden></div>
+    <div class="admin-overlay" data-admin-overlay hidden></div>
+    <div class="admin-modal" data-admin-modal hidden></div>
+
+    <script src="../mock-data.js"></script>
+    <script src="../services/database.js?v=objects-partners-1"></script>
+    <script src="./objects-partners-service.js?v=objects-partners-1"></script>
+    <script src="./objects-partners.js?v=objects-partners-1"></script>
+  </body>
+</html>

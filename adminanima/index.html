@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ANIMA Админка · Логин</title>
+    <link rel="stylesheet" href="./admin.css?v=admin-ops-6" />
+  </head>
+  <body data-page="login">
+    <main class="auth-screen">
+      <section class="auth-card">
+        <img class="auth-logo" src="../assets/anima-wordmark.png" alt="ANIMA" />
+        <p class="auth-kicker">Шаг 1 / 2</p>
+        <h1>Введите логин</h1>
+        <form class="auth-form" data-login-form>
+          <label>
+            Логин администратора
+            <input name="username" autocomplete="username" placeholder="ADMIN_ANIMA1" required />
+          </label>
+          <button type="submit">Далее</button>
+          <small data-auth-error aria-live="polite"></small>
+        </form>
+      </section>
+    </main>
+
+    <script src="../mock-data.js"></script>
+    <script src="../services/database.js?v=shared-db-4"></script>
+    <script src="./admin.js?v=admin-ops-6"></script>
+  </body>
+</html>

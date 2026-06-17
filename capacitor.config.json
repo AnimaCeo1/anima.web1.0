@@ -1,0 +1,11 @@
+{
+  "appId": "com.anima.dalat",
+  "appName": "ANIMA",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "capacitor"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}

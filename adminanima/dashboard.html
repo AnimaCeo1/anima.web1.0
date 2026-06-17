@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ANIMA Админка · Главная</title>
+    <link rel="stylesheet" href="./admin.css?v=dashboard-home-1" />
+  </head>
+  <body class="dashboard-home-body" data-page="dashboard-home">
+    <main class="dashboard-home-shell">
+      <aside class="dashboard-sidebar" data-sidebar>
+        <div class="dashboard-sidebar-scroll">
+          <a class="dashboard-brand" href="./dashboard.html" aria-label="ANIMA home">
+            <img src="../assets/anima-wordmark.png" alt="ANIMA" />
+          </a>
+
+          <nav class="sidebar-groups" data-sidebar-nav></nav>
+        </div>
+
+        <button type="button" class="sidebar-collapse-button" data-sidebar-toggle>
+          <span class="sidebar-collapse-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
+          </span>
+          <span>Свернуть меню</span>
+        </button>
+      </aside>
+
+      <section class="dashboard-content">
+        <header class="dashboard-topbar">
+          <div class="topbar-left">
+            <button type="button" class="topbar-icon-button" data-sidebar-toggle aria-label="Открыть меню">
+              <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            </button>
+
+            <label class="dashboard-search">
+              <span class="dashboard-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l5 5" /></svg>
+              </span>
+              <input type="search" placeholder="Поиск по заявкам, объектам, пользователям..." />
+              <span class="dashboard-search-shortcut">⌘K</span>
+            </label>
+          </div>
+
+          <div class="topbar-right">
+          </div>
+        </header>
+
+        <section class="dashboard-hero">
+          <div>
+            <h1>Добро пожаловать, ADMIN_ANIMA1! 👋</h1>
+            <p>Супер админ панель управления ANIMA</p>
+          </div>
+
+          <div class="dashboard-filters">
+            <button type="button" class="filter-button" data-range-button data-popover-trigger="range">
+              <span class="filter-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>
+              </span>
+              <span>01.06.2025 - 30.06.2025</span>
+            </button>
+            <button type="button" class="filter-button filter-button-select" data-range-preset-button data-popover-trigger="range">
+              <span>Этот месяц</span>
+              <span class="profile-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" /></svg>
+              </span>
+            </button>
+            <div class="topbar-popover range-popover" data-popover="range" hidden>
+              <div class="popover-header">
+                <strong>Период статистики</strong>
+                <small>Применяется ко всем блокам</small>
+              </div>
+              <div class="range-grid">
+                <label>
+                  <span>С</span>
+                  <input type="date" data-range-from />
+                </label>
+                <label>
+                  <span>По</span>
+                  <input type="date" data-range-to />
+                </label>
+              </div>
+              <label class="range-preset-field">
+                <span>Быстрый выбор</span>
+                <select data-range-preset>
+                  <option value="thisWeek">Эта неделя</option>
+                  <option value="thisMonth">Этот месяц</option>
+                  <option value="last30">30 дней</option>
+                  <option value="all">Весь период</option>
+                  <option value="dataRange">Период данных</option>
+                  <option value="custom">Свой период</option>
+                </select>
+              </label>
+              <div class="range-actions">
+                <button type="button" data-range-apply>Применить</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="kpi-grid" data-kpi-grid></section>
+
+        <section class="dashboard-main-grid">
+          <article class="dashboard-card chart-card">
+            <header class="card-header">
+              <h2>Динамика оборота</h2>
+              <label class="card-select-button chart-period-select">
+                <select data-chart-granularity>
+                  <option value="day">По дням</option>
+                  <option value="week">По неделям</option>
+                  <option value="month">По месяцам</option>
+                </select>
+                <span aria-hidden="true">⌄</span>
+              </label>
+            </header>
+            <div class="chart-legend" data-chart-legend></div>
+            <div class="line-chart-wrap" data-line-chart></div>
+          </article>
+
+          <article class="dashboard-card applications-card">
+            <header class="card-header">
+              <h2>Недавние заявки</h2>
+              <button type="button" class="card-link-button">Смотреть все</button>
+            </header>
+            <div class="applications-list" data-recent-applications></div>
+          </article>
+        </section>
+
+        <section class="dashboard-middle-grid">
+          <article class="dashboard-card donut-card">
+            <header class="card-header"><h2>Статус заявок</h2></header>
+            <div class="donut-layout" data-status-donut></div>
+          </article>
+
+          <article class="dashboard-card payouts-card">
+            <header class="card-header">
+              <h2>Ожидающие выплаты</h2>
+              <button type="button" class="card-link-button">Смотреть все</button>
+            </header>
+            <div class="payouts-list" data-payouts-list></div>
+          </article>
+
+          <article class="dashboard-card system-card">
+            <header class="card-header">
+              <h2>Активность системы</h2>
+              <button type="button" class="card-link-button">Смотреть все</button>
+            </header>
+            <div class="system-activity-list" data-system-activity></div>
+          </article>
+        </section>
+
+        <article class="dashboard-card bookings-card">
+          <header class="card-header">
+            <h2>Последние бронирования</h2>
+            <button type="button" class="card-link-button">Смотреть все</button>
+          </header>
+          <div class="bookings-table" data-bookings-table></div>
+        </article>
+      </section>
+    </main>
+
+    <div class="dashboard-toast" data-dashboard-toast hidden></div>
+
+    <script src="../mock-data.js"></script>
+    <script src="../services/database.js?v=dashboard-home-2"></script>
+    <script src="./dashboard-home.js?v=dashboard-home-2"></script>
+  </body>
+</html>
