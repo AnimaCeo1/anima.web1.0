@@ -24,7 +24,7 @@
       })();
     </script>
     <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-18-auth-responsive-1" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-18-release-ui-1" />
   </head>
   <body>
     <section class="launch-screen" aria-label="ANIMA opening animation" data-launch-screen>
@@ -60,6 +60,7 @@
             <div class="language-menu" hidden>
               <button type="button" data-lang="English"><span data-i18n="profile.english">English</span> <span>EN</span></button>
               <button type="button" data-lang="Russian"><span data-i18n="profile.russian">Russian</span> <span>RU</span></button>
+              <button type="button" data-lang="Vietnamese" disabled><span>Tiếng Việt</span> <span>VN · soon</span></button>
             </div>
             <button class="icon-button" type="button" aria-label="Notifications">
               <span class="notify-dot" aria-hidden="true"></span>
@@ -366,7 +367,7 @@
 
       <section class="screen-view" aria-live="polite" hidden></section>
 
-      <nav class="utility-nav" id="anima-hub" aria-label="ANIMA Hub tools" aria-hidden="true" inert hidden>
+      <nav class="utility-nav release-hidden" id="anima-hub" aria-label="ANIMA Hub tools" aria-hidden="true" inert hidden>
         <a class="ai-tool active" href="#" data-screen="assistant">
           <span class="orb" aria-hidden="true"></span>
           <span>AI Assistant</span>
@@ -425,31 +426,29 @@
           </svg>
           <span data-i18n="common.home">Home</span>
         </a>
-        <a href="#" data-screen="feed">
+        <a href="#" data-screen="explore">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 5h14" />
-            <path d="M5 12h14" />
-            <path d="M5 19h10" />
-            <circle cx="4" cy="5" r="1" />
-            <circle cx="4" cy="12" r="1" />
-            <circle cx="4" cy="19" r="1" />
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15 9-2.2 5.8L9 16l2.2-5.8L15 9Z" />
           </svg>
-          <span data-i18n="common.feed">Feed</span>
+          <span data-i18n="common.explore">Explore</span>
         </a>
-        <button
-          class="center-action"
-          type="button"
-          aria-label="Open ANIMA Hub"
-          aria-controls="anima-hub"
-          aria-expanded="false"
-        >
-          <span class="hub-logo" aria-hidden="true"></span>
-        </button>
         <a href="#" data-screen="saved">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z" />
           </svg>
           <span data-i18n="common.saved">Saved</span>
+        </a>
+        <a href="#" data-screen="for-business">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 20V8a2 2 0 0 1 2-2h5v14" />
+            <path d="M13 20V4h5a2 2 0 0 1 2 2v14" />
+            <path d="M8 10h1" />
+            <path d="M8 14h1" />
+            <path d="M16 8h1" />
+            <path d="M16 12h1" />
+          </svg>
+          <span data-i18n="common.business">Business</span>
         </a>
         <a href="#" data-screen="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -461,8 +460,8 @@
       </nav>
     </main>
     <script defer src="./mock-data.js"></script>
-    <script defer src="./services/database.js?v=2026-06-18-auth-responsive-1"></script>
-    <script defer src="./services/weather.js?v=2026-06-18-auth-responsive-1"></script>
-    <script defer src="./script.js?v=2026-06-18-auth-responsive-1"></script>
+    <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
+    <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
+    <script defer src="./script.js?v=2026-06-18-release-ui-1"></script>
   </body>
 </html>

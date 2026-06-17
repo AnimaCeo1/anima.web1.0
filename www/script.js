@@ -34,7 +34,7 @@ let searchIndexLocale = "";
 let adminContentDirty = true;
 let startupTasksScheduled = false;
 const stayFilters = { category: "Hotels" };
-const rootScreens = new Set(["home", "feed", "saved", "profile"]);
+const rootScreens = new Set(["home", "explore", "saved", "for-business", "profile"]);
 const userSettings = {
   language: safeStorageGet("anima.language", "English"),
   currency: safeStorageGet("anima.currency", data.user.currency || "VND"),
@@ -462,6 +462,7 @@ function normalizeAdminEntry(entry) {
 const languageCodes = {
   English: "EN",
   Russian: "RU",
+  Vietnamese: "VN",
 };
 
 const I18N = {
@@ -469,7 +470,9 @@ const I18N = {
     "language.choose": "Choose language",
     "common.home": "Home",
     "common.feed": "Feed",
+    "common.explore": "Explore",
     "common.saved": "Saved",
+    "common.business": "Business",
     "common.profile": "Profile",
     "common.openFeed": "Open Feed",
     "home.goodMorning": "Good morning,",
@@ -525,7 +528,9 @@ const I18N = {
     "language.choose": "Выбрать язык",
     "common.home": "Главная",
     "common.feed": "Лента",
+    "common.explore": "Обзор",
     "common.saved": "Сохранённое",
+    "common.business": "Бизнес",
     "common.profile": "Профиль",
     "common.openFeed": "Открыть ленту",
     "home.goodMorning": "Доброе утро,",
@@ -1377,7 +1382,7 @@ function renderAuthBody(view, codeBox) {
   `;
   if (view === "choice") {
     return `
-      <p class="auth-note">${ru ? "Выберите способ входа: Telegram, Google, аккаунт ANIMA по почте или кабинет партнёра." : "Choose Telegram, Google, ANIMA email account or partner dashboard access."}</p>
+      <p class="auth-note">${ru ? "Digital ecosystem for Dalat. Войдите через Telegram, Google, email или кабинет платформы." : "Digital ecosystem for Dalat. Continue with Telegram, Google, email or platform dashboard access."}</p>
       <div class="auth-social-stack auth-choice-stack">
         ${socialButton("telegram", "Telegram", ru ? "Быстрый вход через Telegram" : "Fast sign-in with Telegram", `
           <svg viewBox="0 0 24 24">
@@ -1400,6 +1405,10 @@ function renderAuthBody(view, codeBox) {
       <button class="auth-partner-entry" type="button" data-auth-partner>
         <span>${ru ? "Вход для партнёров" : "Partner dashboard"}</span>
         <strong>${ru ? "Открыть кабинет партнёра" : "Open partner cabinet"}</strong>
+      </button>
+      <button class="auth-partner-entry admin" type="button" data-auth-admin>
+        <span>${ru ? "Вход для админа" : "Admin dashboard"}</span>
+        <strong>${ru ? "Открыть панель управления" : "Open admin panel"}</strong>
       </button>
     `;
   }
@@ -1548,6 +1557,9 @@ function bindAuthActions() {
   });
   authEntry.querySelector("[data-auth-partner]")?.addEventListener("click", () => {
     window.location.href = "./partner.html";
+  });
+  authEntry.querySelector("[data-auth-admin]")?.addEventListener("click", () => {
+    window.location.href = "./adminanima/";
   });
   authEntry.querySelector("[data-auth-guest]")?.addEventListener("click", () => {
     saveGuestSession();
@@ -1855,6 +1867,12 @@ function startAuthFlow() {
 }
 
 const screenConfig = {
+  explore: {
+    title: "Explore",
+    subtitle: "Stay, food, nature, transport and services across Dalat.",
+    search: "Search ANIMA sections...",
+    chips: [],
+  },
   feed: {
     title: "Feed",
     subtitle: "What's happening in Dalat today.",
@@ -2310,8 +2328,14 @@ function goBack() {
 }
 
 function updateBottomNav(screen) {
+  const exploreScreens = new Set(["explore", "stay", "eat", "experiences", "transport", "exchange", "services", "store", "jobs", "community", "tech-solutions"]);
+  const businessScreens = new Set(["for-business", "partners", "contact"]);
   document.querySelectorAll(".bottom-nav a[data-screen]").forEach((link) => {
-    link.classList.toggle("active", link.dataset.screen === screen);
+    const target = link.dataset.screen;
+    const active = target === screen
+      || (target === "explore" && exploreScreens.has(screen))
+      || (target === "for-business" && businessScreens.has(screen));
+    link.classList.toggle("active", active);
   });
 }
 
@@ -2866,6 +2890,7 @@ function renderScreen(screen) {
   if (screen.startsWith("detail:")) return renderDetail(screen.slice(7));
   if (screen === "search") return renderSearchResults(config);
   if (screen === "profile") return renderProfile(config);
+  if (screen === "explore") return renderExplore(config);
   if (screen === "anima-plus") return renderAnimaPlusDetails(config);
   if (screen === "rewards") return renderRewardsCenter(config);
   if (screen === "feed") return renderFeed(config);
@@ -3543,8 +3568,52 @@ function renderScreenExtra(screen) {
   return "";
 }
 
+function renderExplore(config) {
+  const ru = isRussianLanguage();
+  const mainSections = [
+    ["Stay", ru ? "Отели, виллы и апартаменты" : "Hotels, villas and apartments", "stay"],
+    ["Eat & Drink", ru ? "Кафе, рестораны и specialty coffee" : "Cafes, restaurants and specialty coffee", "eat"],
+    ["Experiences", ru ? "Туры, активности и маршруты" : "Tours, activities and routes", "experiences"],
+    ["Nature", ru ? "Водопады, фермы и viewpoints" : "Waterfalls, farms and viewpoints", "experiences"],
+    ["Transport", ru ? "Байки, трансферы и аренда" : "Bikes, transfers and rentals", "transport"],
+    ["Exchange", ru ? "Заявка на обмен валют" : "Currency exchange requests", "exchange"],
+    ["Services", ru ? "Локальная помощь и сервисы" : "Local help and services", "services"],
+    ["ANIMA Store", ru ? "Кофе, мёд, подарки и мерч" : "Coffee, honey, gifts and merch", "store"],
+  ];
+  const ecosystem = [
+    ["Jobs", ru ? "Работа и отклики" : "Jobs and applications", "jobs"],
+    ["Community", ru ? "Локальные события и люди" : "Local events and people", "community"],
+    ["For Business", ru ? "Партнёрство и продвижение" : "Partnership and promotion", "for-business"],
+    ["Digital Solutions", ru ? "Сайты, CRM и автоматизация" : "Websites, CRM and automation", "tech-solutions"],
+  ];
+  const card = ([title, text, screen]) => `
+    <button class="explore-card" type="button" data-screen="${screen}">
+      <span>${title}</span>
+      <p>${text}</p>
+    </button>
+  `;
+  return `
+    <div class="screen-inner explore-screen">
+      ${renderHeader(config, { back: false })}
+      <section class="partners-intro-card release-intro-card">
+        <p class="brand-kicker">ANIMA 1.0</p>
+        <h2>${ru ? "Цифровая экосистема Далата для путешествий, жизни и бизнеса." : "Digital ecosystem for Dalat travel, lifestyle and business."}</h2>
+        <p>${ru ? "Выберите направление и переходите к рабочим разделам платформы." : "Choose a direction and move through the platform's live sections."}</p>
+      </section>
+      <section class="screen-section">
+        <div class="section-heading compact"><h2>${ru ? "Основные разделы" : "Main Sections"}</h2></div>
+        <div class="explore-grid">${mainSections.map(card).join("")}</div>
+      </section>
+      <section class="screen-section">
+        <div class="section-heading compact"><h2>ANIMA Ecosystem</h2></div>
+        <div class="explore-grid ecosystem">${ecosystem.map(card).join("")}</div>
+      </section>
+    </div>
+  `;
+}
+
 function renderSaved(config) {
-  const categories = ["Stay", "Places", "Store", "Routes", "Experiences"];
+  const categories = ["All", "Stay", "Places", "Store", "Routes", "Experiences", "Services"];
   const savedCards = savedCollection;
   return `
     <div class="screen-inner saved-screen immersive-root">
@@ -3567,11 +3636,12 @@ function renderSavedEmptyState() {
 }
 
 function savedCard(item) {
+  const group = item.type || item.group || item.category || "Places";
   return `
-    <article class="saved-card" data-saved-group="${item.type || item.group || item.category}" data-detail="${item.title}" style="--saved-img: url('${item.image || "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=82"}')">
+    <article class="saved-card" data-saved-group="${escapeAttr(group)}" data-detail="${item.title}" style="--saved-img: url('${item.image || "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=82"}')">
       <button class="save-button inline saved" type="button" aria-label="Saved ${item.title}">♡</button>
       <div>
-        <span>${item.type || item.group || item.category}</span>
+        <span>${group}</span>
         <h2>${item.title}</h2>
         <p>${item.location || item.distance || item.meta || "Dalat"}</p>
         <div class="place-tags">${(item.tags || item.vibe || [item.category]).slice(0, 3).map((tag) => `<span>${tag}</span>`).join("")}</div>
@@ -4773,6 +4843,17 @@ function bindScreenActions() {
     button.addEventListener("click", () => {
       button.parentElement.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
+    });
+  });
+  screenView.querySelectorAll("[data-saved-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const filter = String(button.dataset.savedFilter || "All").toLowerCase();
+      button.parentElement?.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      screenView.querySelectorAll(".saved-card").forEach((card) => {
+        const group = String(card.dataset.savedGroup || "").toLowerCase();
+        card.hidden = filter !== "all" && !group.includes(filter);
+      });
     });
   });
   const searchForm = screenView.querySelector("[data-search-form]");
