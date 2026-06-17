@@ -35,6 +35,7 @@ window.AnimaWeatherService = (() => {
   }
 
   async function fetchCurrentWeather() {
+    const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
     const url = new URL(endpoint);
     url.searchParams.set("latitude", DALAT.latitude);
     url.searchParams.set("longitude", DALAT.longitude);
@@ -48,7 +49,7 @@ window.AnimaWeatherService = (() => {
     const current = payload.current;
     if (!current) throw new Error("Weather response missing current data");
 
-    return {
+    const result = {
       temperature: Math.round(current.temperature_2m),
       feelsLike: Math.round(current.apparent_temperature),
       humidity: Math.round(current.relative_humidity_2m),
@@ -58,6 +59,9 @@ window.AnimaWeatherService = (() => {
       icon: mapWeatherCodeToIcon(current.weather_code),
       updatedAt: current.time,
     };
+    const duration = (typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt;
+    console.log(`[perf][weather] fetchCurrentWeather: ${duration.toFixed(1)}ms`);
+    return result;
   }
 
   return {

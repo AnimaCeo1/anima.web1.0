@@ -4,13 +4,45 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ANIMA</title>
+    <script>
+      (function () {
+        const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+        window.__ANIMA_BOOT_METRICS__ = {
+          startedAt,
+          marks: [],
+        };
+        const mark = (label) => {
+          const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+          const duration = now - startedAt;
+          window.__ANIMA_BOOT_METRICS__.marks.push({ label, at: now, duration });
+          console.log(`[perf][boot] ${label}: ${duration.toFixed(1)}ms`);
+        };
+        window.__ANIMA_BOOT_MARK__ = mark;
+        mark("index.html:head-script");
+        document.addEventListener("DOMContentLoaded", () => mark("index.html:DOMContentLoaded"), { once: true });
+        window.addEventListener("load", () => mark("index.html:window.load"), { once: true });
+      })();
+    </script>
     <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-11-main-perf-2" />
   </head>
   <body>
+    <section class="launch-screen" aria-label="ANIMA opening animation" data-launch-screen>
+      <div class="launch-screen-core">
+        <div class="launch-screen-orbit launch-screen-orbit-left" aria-hidden="true"></div>
+        <div class="launch-screen-orbit launch-screen-orbit-right" aria-hidden="true"></div>
+        <div class="launch-screen-flare" aria-hidden="true"></div>
+        <div class="launch-screen-mark">
+          <img src="./assets/anima-wordmark.png" alt="ANIMA" />
+        </div>
+        <p class="launch-screen-kicker">Весь мир - в одном приложении</p>
+      </div>
+    </section>
+    <section class="auth-entry" hidden></section>
     <main class="phone-shell" aria-label="ANIMA city companion">
       <section class="hero">
-        <div class="hero-bg"></div>
+        <div class="hero-bg hero-bg-base"></div>
+        <div class="hero-bg hero-bg-overlay" aria-hidden="true"></div>
         <header class="topbar">
           <a class="brand" href="#" aria-label="ANIMA home" data-screen="home">
             <img src="./assets/anima-wordmark.png" alt="ANIMA" />
@@ -45,6 +77,11 @@
           <p data-i18n="home.subtitle">Your digital ecosystem for exploring Dalat.</p>
         </div>
 
+        <aside class="time-card" aria-label="Local time in Dalat" data-time-card>
+          <strong data-time-current>--:--</strong>
+          <span data-time-date>--</span>
+        </aside>
+
         <aside class="weather-card" aria-label="Current weather" data-i18n-aria="weather.label" data-weather-card>
           <div><span aria-hidden="true" data-weather-icon>🌥</span> <span class="weather-location">Dalat ·</span> <strong data-weather-temp>--°C</strong></div>
           <p data-weather-condition data-i18n="weather.loading">Loading weather...</p>
@@ -56,28 +93,40 @@
           <small data-weather-updated></small>
         </aside>
 
-        <form class="search-card" role="search">
-          <label for="search-input" class="visually-hidden">Search places, services, experiences</label>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m16.5 16.5 4 4" />
-          </svg>
-          <input id="search-input" type="search" placeholder="Search places, services, experiences..." data-i18n-placeholder="home.search" />
-          <button type="button" class="filter-button" aria-label="Filter results">
-            <span class="filter-divider" aria-hidden="true"></span>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h10" />
-              <path d="M18 7h2" />
-              <path d="M16 5v4" />
-              <path d="M4 17h2" />
-              <path d="M10 17h10" />
-              <path d="M8 15v4" />
-              <path d="M4 12h6" />
-              <path d="M14 12h6" />
-              <path d="M12 10v4" />
-            </svg>
-          </button>
-        </form>
+        <div class="search-shell">
+          <form class="search-card" role="search">
+            <label for="search-input" class="visually-hidden">Search places, services, experiences</label>
+            <button type="submit" class="search-submit-button" aria-label="Search">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m16.5 16.5 4 4" />
+              </svg>
+            </button>
+            <input
+              id="search-input"
+              type="text"
+              placeholder="Search places, services, experiences..."
+              data-i18n-placeholder="home.search"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="none"
+              spellcheck="false"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="search-suggestions"
+              oninput="window.__animaSearchInput && window.__animaSearchInput(this.value)"
+              onfocus="window.__animaSearchFocus && window.__animaSearchFocus(this.value)"
+            />
+            <button type="button" class="filter-button" aria-label="Clear search">
+              <span class="filter-divider" aria-hidden="true"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12" />
+              <path d="M18 6 6 18" />
+              </svg>
+            </button>
+          </form>
+          <div class="search-suggestions" id="search-suggestions" data-search-suggestions></div>
+        </div>
       </section>
 
       <section class="content" aria-label="ANIMA shortcuts and recommendations">
@@ -153,7 +202,6 @@
         <section class="quick-section" aria-labelledby="quick-access-title">
           <div class="section-heading">
             <h2 id="quick-access-title" data-i18n="home.ecosystem">ANIMA Ecosystem</h2>
-            <a href="#" data-screen="feed">Today's updates</a>
           </div>
           <div class="quick-grid">
             <a
@@ -167,8 +215,8 @@
                 <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
                 <path d="M4 12h16" />
               </svg>
-              <strong>Jobs</strong>
-              <span>Find your next opportunity</span>
+              <strong data-i18n="home.jobsTitle">Jobs</strong>
+              <span data-i18n="home.jobsSubtitle">Find your next opportunity</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
             <a
@@ -183,8 +231,8 @@
                 <circle cx="17" cy="9" r="3" />
                 <path d="M17 15a5 5 0 0 1 5 5" />
               </svg>
-              <strong>Community</strong>
-              <span>Local activity and posts</span>
+              <strong data-i18n="home.communityTitle">Community</strong>
+              <span data-i18n="home.communitySubtitle">Local activity and posts</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
             <a
@@ -198,8 +246,8 @@
                 <path d="m16 12-4-4-6 6a3 3 0 0 0 4.2 4.2l1.8-1.8" />
                 <path d="m2 8.2 3.2-3.2L9 8.8" />
               </svg>
-              <strong>For Business</strong>
-              <span>Grow your business</span>
+              <strong data-i18n="home.businessTitle">For Business</strong>
+              <span data-i18n="home.businessSubtitle">Grow your business</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
             <a
@@ -214,8 +262,8 @@
                 <path d="m10 13-2 2 2 2" />
                 <path d="m14 13 2 2-2 2" />
               </svg>
-              <strong>Digital Solutions</strong>
-              <span>Web, apps &amp; digital services</span>
+              <strong data-i18n="home.digitalTitle">Digital Solutions</strong>
+              <span data-i18n="home.digitalSubtitle">Web, apps &amp; digital services</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
           </div>
@@ -233,9 +281,9 @@
               data-screen="feed"
               style="--trend-img: url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=900&q=82')"
             >
-              <span>New cafe</span>
-              <strong>Forest cafe joined ANIMA</strong>
-              <small>Partner rewards available today</small>
+              <span data-i18n="home.feedCafeEyebrow">New cafe</span>
+              <strong data-i18n="home.feedCafeTitle">Forest cafe joined ANIMA</strong>
+              <small data-i18n="home.feedCafeSubtitle">Partner rewards available today</small>
             </a>
             <a
               class="feed-preview-card"
@@ -243,9 +291,9 @@
               data-screen="feed"
               style="--trend-img: url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=900&q=82')"
             >
-              <span>Tonight</span>
-              <strong>Live music near the lake</strong>
-              <small>128 people interested</small>
+              <span data-i18n="home.feedTonightEyebrow">Tonight</span>
+              <strong data-i18n="home.feedTonightTitle">Live music near the lake</strong>
+              <small data-i18n="home.feedTonightSubtitle">128 people interested</small>
             </a>
             <a
               class="feed-preview-card premium"
@@ -253,9 +301,9 @@
               data-screen="experiences"
               style="--trend-img: url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=82')"
             >
-              <span>Experience</span>
-              <strong>Hidden Waterfalls Route</strong>
-              <small>Private route revealed after booking</small>
+              <span data-i18n="home.feedExperienceEyebrow">Experience</span>
+              <strong data-i18n="home.feedExperienceTitle">Hidden Waterfalls Route</strong>
+              <small data-i18n="home.feedExperienceSubtitle">Private route revealed after booking</small>
             </a>
             <a
               class="feed-preview-card"
@@ -263,9 +311,9 @@
               data-screen="eat"
               style="--trend-img: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=82')"
             >
-              <span>Partner promo</span>
-              <strong>15% off at Pine Brew</strong>
-              <small>Available for ANIMA users today</small>
+              <span data-i18n="home.feedPromoEyebrow">Partner promo</span>
+              <strong data-i18n="home.feedPromoTitle">15% off at Pine Brew</strong>
+              <small data-i18n="home.feedPromoSubtitle">Available for ANIMA users today</small>
             </a>
           </div>
         </section>
@@ -274,7 +322,7 @@
           <div class="brand-footer-head">
             <div>
               <h2 id="partners-title" data-i18n="home.partners">Our Partners</h2>
-              <p>Local places powering the ΛNIMΛ Dalat ecosystem.</p>
+              <p data-i18n="home.partnersSubtitle">Local places powering the ΛNIMΛ Dalat ecosystem.</p>
             </div>
             <div class="social-block">
               <h2 data-i18n="home.social">Connect With Us</h2>
@@ -298,18 +346,18 @@
           <div class="partner-mini-grid">
             <a class="partner-mini-card" href="#" data-screen="partners">
               <span style="--partner-thumb: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong>La Viet Coffee</strong>
-              <small>Cafe · Specialty Coffee</small>
+              <strong data-i18n="home.partner1Title">La Viet Coffee</strong>
+              <small data-i18n="home.partner1Subtitle">Cafe · Specialty Coffee</small>
             </a>
             <a class="partner-mini-card" href="#" data-screen="partners">
               <span style="--partner-thumb: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong>Goldient Boutique</strong>
-              <small>Hotel · Boutique Stay</small>
+              <strong data-i18n="home.partner2Title">Goldient Boutique</strong>
+              <small data-i18n="home.partner2Subtitle">Hotel · Boutique Stay</small>
             </a>
             <a class="partner-mini-card" href="#" data-screen="partners">
               <span style="--partner-thumb: url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong>ANIMA Rides</strong>
-              <small>Transport · Verified</small>
+              <strong data-i18n="home.partner3Title">ANIMA Rides</strong>
+              <small data-i18n="home.partner3Subtitle">Transport · Verified</small>
             </a>
           </div>
         </section>
@@ -412,8 +460,9 @@
         </a>
       </nav>
     </main>
-    <script src="./mock-data.js"></script>
-    <script src="./services/weather.js"></script>
-    <script src="./script.js"></script>
+    <script defer src="./mock-data.js"></script>
+    <script defer src="./services/database.js?v=2026-06-11-main-perf-2"></script>
+    <script defer src="./services/weather.js?v=2026-06-11-main-perf-2"></script>
+    <script defer src="./script.js?v=2026-06-11-main-perf-2"></script>
   </body>
 </html>
