@@ -1323,8 +1323,7 @@ function renderAuthEntry() {
           <button class="auth-language-switch" type="button" data-auth-language>${userSettings.language === "Russian" ? "RU" : "EN"}</button>
           <button class="auth-guest-link" type="button" data-auth-guest>${ru ? "Гостевой вход" : "Guest access"}</button>
         </div>
-        ${view.startsWith("pin") ? "" : `<div class="auth-avatar-glow"><div class="auth-avatar-core">A</div></div>`}
-        <img class="auth-brand-mark" src="./assets/anima-wordmark.png" alt="ANIMA" />
+        ${view.startsWith("pin") ? "" : `<div class="auth-wordmark" aria-label="ANIMA">ANIMA</div>`}
         <p class="auth-kicker-text">${ru ? "Безопасный вход" : "Secure entry"}</p>
         <h1>${authTitle(view)}</h1>
         ${renderAuthBody(view, codeBox)}
