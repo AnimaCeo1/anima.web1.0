@@ -9,6 +9,7 @@ const homeContent = document.querySelector(".content");
 const screenView = document.querySelector(".screen-view");
 const animaHub = document.querySelector("#anima-hub");
 const centerAction = document.querySelector(".center-action");
+const bottomNav = document.querySelector(".bottom-nav");
 const filterButton = document.querySelector(".filter-button");
 const homeSearchForm = document.querySelector(".search-card");
 const searchShell = document.querySelector(".search-shell");
@@ -2423,6 +2424,40 @@ window.addEventListener("resize", () => {
 phoneShell?.addEventListener("scroll", () => {
   if (searchSuggestions && !searchSuggestions.hidden) positionSearchSuggestions();
 }, { passive: true });
+
+function initBottomNavScrollBehavior() {
+  if (!bottomNav) return;
+
+  let scrollStopTimer = null;
+  const SCROLL_STOP_MS = 140;
+  const TOP_THRESHOLD = 6;
+
+  const setCompact = (compact) => {
+    bottomNav.classList.toggle("is-compact", compact);
+  };
+
+  const handleScroll = (scrollTop) => {
+    if (scrollTop <= TOP_THRESHOLD) {
+      clearTimeout(scrollStopTimer);
+      setCompact(false);
+      return;
+    }
+
+    setCompact(true);
+    clearTimeout(scrollStopTimer);
+    scrollStopTimer = window.setTimeout(() => setCompact(false), SCROLL_STOP_MS);
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => handleScroll(window.scrollY || document.documentElement.scrollTop || 0),
+    { passive: true },
+  );
+
+  screenView?.addEventListener("scroll", () => handleScroll(screenView.scrollTop || 0), { passive: true });
+}
+
+initBottomNavScrollBehavior();
 
 languageMenu?.querySelectorAll("button").forEach((button) => {
   button.addEventListener("click", (event) => {
@@ -5367,17 +5402,10 @@ function renderStayDetail(stay) {
         <p class="stay-detail-about">${stay.description}</p>
         ${metaParts.length ? `<p class="stay-detail-meta">${metaParts.join(" · ")}</p>` : ""}
         <a class="stay-maps-link" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">Google Maps</a>
-      </section>
-
-      <div class="stay-book-cta stay-detail-book-bar" data-stay-book-bar>
-        <div class="stay-book-cta-copy stay-detail-book-price">
-          <strong>${formatPriceMap(stay.priceMap, stay.price)}</strong>
-          <span>${localizePriceType(stay.priceType)}</span>
-        </div>
-        <button class="gold-button stay-book-cta-button stay-detail-book-cta" type="button" data-stay-book-open data-open-stay-booking="${escapeAttr(stay.title)}">
+        <button class="gold-button stay-detail-book-trigger" type="button" data-stay-book-open data-open-stay-booking="${escapeAttr(stay.title)}">
           ${stayCopy("Book", "Забронировать", "Đặt phòng")}
         </button>
-      </div>
+      </section>
     </div>
   `;
 }
