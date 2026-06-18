@@ -24,7 +24,7 @@
       })();
     </script>
     <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-18-premium-auth-1" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-18-cinematic-auth-1" />
   </head>
   <body>
     <section class="launch-screen" aria-label="ANIMA opening animation" data-launch-screen>
@@ -135,7 +135,16 @@
           <h2 data-i18n="home.mainSections">Main Sections</h2>
         </div>
         <nav class="category-row core-services" aria-label="Core Dalat services">
-          <button class="category-card active" type="button" data-screen="stay">
+          <button class="category-card active" type="button" data-screen="exchange">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 7h11" />
+              <path d="m15 4 3 3-3 3" />
+              <path d="M17 17H6" />
+              <path d="m9 14-3 3 3 3" />
+            </svg>
+            <span>Exchange</span>
+          </button>
+          <button class="category-card" type="button" data-screen="stay">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 11V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
               <path d="M5 11h14a2 2 0 0 1 2 2v5H3v-5a2 2 0 0 1 2-2Z" />
@@ -158,11 +167,13 @@
           </button>
           <button class="category-card" type="button" data-screen="experiences">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 3 4 9l8 12 8-12-8-6Z" />
-              <path d="M8.5 10.5 12 18l3.5-7.5" />
-              <path d="M4 9h16" />
+              <rect x="5" y="4" width="14" height="16" rx="2" />
+              <path d="M8 2v4" />
+              <path d="M16 2v4" />
+              <path d="M8 10h8" />
+              <path d="M8 14h5" />
             </svg>
-            <span>Experiences</span>
+            <span>Events</span>
           </button>
           <button class="category-card" type="button" data-screen="transport">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -174,35 +185,33 @@
             </svg>
             <span>Transport</span>
           </button>
-          <button class="category-card" type="button" data-screen="exchange">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 7h11" />
-              <path d="m15 4 3 3-3 3" />
-              <path d="M17 17H6" />
-              <path d="m9 14-3 3 3 3" />
-            </svg>
-            <span>Exchange</span>
-          </button>
-          <button class="category-card" type="button" data-screen="services">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="9" cy="8" r="4" />
-              <path d="M2 21a7 7 0 0 1 14 0" />
-              <path d="M17 11l2 2 4-5" />
-              <path d="M16 19h6" />
-            </svg>
-            <span>Services</span>
-          </button>
         </nav>
 
-        <section class="store-section" aria-labelledby="store-title">
-          <button class="anima-store-wide-button" type="button" data-screen="store" aria-label="Open ANIMA Store">
-            <span id="store-title" aria-hidden="true">ΛNIMΛ STORE</span>
-          </button>
+        <section class="home-rewards-card" aria-labelledby="home-rewards-title">
+          <div class="home-rewards-coin" aria-hidden="true">
+            <img src="./assets/anima-points-coin.png" alt="" />
+          </div>
+          <div class="home-rewards-copy">
+            <h2 id="home-rewards-title">You earn with ANIMA <span aria-hidden="true">✦</span></h2>
+            <p>Use ANIMA Points and get amazing rewards.</p>
+            <button class="cream-button" type="button" data-screen="rewards"><span>View rewards</span><span aria-hidden="true">→</span></button>
+          </div>
+          <div class="home-points-panel">
+            <p>ANIMA Points</p>
+            <div class="points-total">
+              <strong>2,450</strong>
+              <img src="./assets/anima-points-coin.png" alt="" aria-hidden="true" />
+            </div>
+            <p>Until next level<br />550 pts needed</p>
+            <div class="progress"><span style="width:72%"></span></div>
+            <span class="level-badge">Level 2</span>
+          </div>
         </section>
 
         <section class="quick-section" aria-labelledby="quick-access-title">
           <div class="section-heading">
-            <h2 id="quick-access-title" data-i18n="home.ecosystem">ANIMA Ecosystem</h2>
+            <h2 id="quick-access-title">Quick Access</h2>
+            <a href="#" data-screen="explore">See all</a>
           </div>
           <div class="quick-grid">
             <a
@@ -223,17 +232,17 @@
             <a
               class="quick-card visual"
               href="#"
-              data-screen="community"
+              data-screen="services"
               style="--quick-img: url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=700&q=82')"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="9" cy="8" r="4" />
                 <path d="M2 21a7 7 0 0 1 14 0" />
-                <circle cx="17" cy="9" r="3" />
-                <path d="M17 15a5 5 0 0 1 5 5" />
+                <path d="M17 11l2 2 4-5" />
+                <path d="M16 19h6" />
               </svg>
-              <strong data-i18n="home.communityTitle">Community</strong>
-              <span data-i18n="home.communitySubtitle">Local activity and posts</span>
+              <strong>Services</strong>
+              <span>Find or offer services</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
             <a
@@ -267,6 +276,22 @@
               <span data-i18n="home.digitalSubtitle">Web, apps &amp; digital services</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
+          </div>
+        </section>
+
+        <section class="home-qr-card" aria-labelledby="home-qr-title">
+          <div class="home-qr-copy">
+            <h2 id="home-qr-title">Explore more.<br />Earn more.</h2>
+            <p>Book, visit and enjoy - get ANIMA Points with every experience.</p>
+            <a href="#" data-screen="rewards">Learn more <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="home-qr-visual" aria-hidden="true">
+            <div class="home-qr-phone">
+              <div class="home-qr-code">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <small>Scan QR at partner venues and earn ANIMA Points</small>
+            </div>
           </div>
         </section>
 
@@ -426,29 +451,24 @@
           </svg>
           <span data-i18n="common.home">Home</span>
         </a>
-        <a href="#" data-screen="explore">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m15 9-2.2 5.8L9 16l2.2-5.8L15 9Z" />
-          </svg>
-          <span data-i18n="common.explore">Explore</span>
-        </a>
         <a href="#" data-screen="saved">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z" />
           </svg>
           <span data-i18n="common.saved">Saved</span>
         </a>
-        <a href="#" data-screen="for-business">
+        <button class="center-action" type="button" aria-label="Open ANIMA Hub" aria-expanded="false">
+          <span class="hub-logo" aria-hidden="true">A</span>
+          <span class="visually-hidden">ANIMA Hub</span>
+        </button>
+        <a href="#" data-screen="feed">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 20V8a2 2 0 0 1 2-2h5v14" />
-            <path d="M13 20V4h5a2 2 0 0 1 2 2v14" />
-            <path d="M8 10h1" />
-            <path d="M8 14h1" />
-            <path d="M16 8h1" />
-            <path d="M16 12h1" />
+            <circle cx="9" cy="8" r="4" />
+            <path d="M2 21a7 7 0 0 1 14 0" />
+            <circle cx="17" cy="9" r="3" />
+            <path d="M17 15a5 5 0 0 1 5 5" />
           </svg>
-          <span data-i18n="common.business">Business</span>
+          <span data-i18n="common.feed">Feed</span>
         </a>
         <a href="#" data-screen="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -462,6 +482,6 @@
     <script defer src="./mock-data.js"></script>
     <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
     <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
-    <script defer src="./script.js?v=2026-06-18-release-ui-1"></script>
+    <script defer src="./script.js?v=2026-06-18-cinematic-auth-1"></script>
   </body>
 </html>

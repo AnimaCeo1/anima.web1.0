@@ -1316,16 +1316,29 @@ function renderAuthEntry() {
   const codeBox = authState.mailFallbackCode
     ? `<div class="auth-demo-code">${ru ? "Демо-код для локального запуска" : "Demo code for local build"}: <strong>${authState.pendingRegistration?.code || authState.pendingLogin?.code}</strong></div>`
     : "";
+  const panelClass = [
+    view.startsWith("pin") ? "pin-panel" : "auth-panel",
+    compactView ? "auth-panel-compact" : "",
+    view === "choice" ? "auth-panel-choice" : "",
+  ].filter(Boolean).join(" ");
+  const brandHero = view === "choice"
+    ? `
+        <div class="auth-brand-hero">
+          <div class="auth-brand-symbol" aria-hidden="true"><span></span></div>
+          <div class="auth-wordmark" aria-label="ANIMA">ANIMA</div>
+          <p>${ru ? "Digital Ecosystem for Dalat" : "Digital Ecosystem for Dalat"}</p>
+        </div>
+      `
+    : (view.startsWith("pin") ? "" : `<div class="auth-wordmark" aria-label="ANIMA">ANIMA</div>`);
   authEntry.innerHTML = `
     <div class="auth-shell">
-      <section class="${view.startsWith("pin") ? "pin-panel" : "auth-panel"} ${compactView ? "auth-panel-compact" : ""}">
+      <section class="${panelClass}">
         <div class="auth-topbar-row">
           <button class="auth-language-switch" type="button" data-auth-language>${userSettings.language === "Russian" ? "RU" : "EN"}</button>
           <button class="auth-guest-link" type="button" data-auth-guest>${ru ? "Гостевой вход" : "Guest access"}</button>
         </div>
-        ${view.startsWith("pin") ? "" : `<div class="auth-wordmark" aria-label="ANIMA">ANIMA</div>`}
-        <p class="auth-kicker-text">${ru ? "Безопасный вход" : "Secure entry"}</p>
-        <h1>${authTitle(view)}</h1>
+        ${brandHero}
+        ${view === "choice" ? "" : `<p class="auth-kicker-text">${ru ? "Безопасный вход" : "Secure entry"}</p><h1>${authTitle(view)}</h1>`}
         ${renderAuthBody(view, codeBox)}
         <div class="auth-error">${authState.error || ""}</div>
       </section>
@@ -1379,36 +1392,70 @@ function renderAuthBody(view, codeBox) {
       <span class="auth-social-icon" aria-hidden="true">${icon}</span>
     </button>
   `;
+  const providerTile = (provider, title, icon) => `
+    <button class="auth-provider-tile ${provider}" type="button" data-auth-provider="${provider}">
+      <span class="auth-provider-orb" aria-hidden="true">${icon}</span>
+      <strong>${title}</strong>
+    </button>
+  `;
   if (view === "choice") {
     return `
-      <p class="auth-note">${ru ? "Digital ecosystem for Dalat. Войдите через Telegram, Google, email или кабинет платформы." : "Digital ecosystem for Dalat. Continue with Telegram, Google, email or platform dashboard access."}</p>
-      <div class="auth-social-stack auth-choice-stack">
-        ${socialButton("telegram", "Telegram", ru ? "Быстрый вход через Telegram" : "Fast sign-in with Telegram", `
+      <div class="auth-choice-card">
+        <h1>${ru ? "Добро пожаловать в ANIMA" : "Welcome to ANIMA"}</h1>
+        <p class="auth-choice-subtitle">${ru ? "Discover. Connect. Grow.<br />All in one place." : "Discover. Connect. Grow.<br />All in one place."}</p>
+        <p class="auth-choice-label">${ru ? "Продолжить как пользователь" : "Continue as a user"}</p>
+        <div class="auth-provider-grid">
+          ${providerTile("google", "Google", `
+            <svg viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.5c-.2 1.2-.9 2.3-1.9 3v2.5h3.1c1.8-1.6 3.1-4 3.1-7.2Z" />
+              <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.5l-3.1-2.5c-.9.6-2 .9-3.6.9-2.8 0-5.1-1.9-5.9-4.4H2.9V16c1.7 3.5 5.3 6 9.1 6Z" />
+              <path fill="#FBBC05" d="M6.1 13.5c-.2-.6-.4-1.2-.4-1.9s.1-1.3.4-1.9V7.2H2.9C2.3 8.5 2 10 2 11.6s.3 3.1.9 4.4l3.2-2.5Z" />
+              <path fill="#EA4335" d="M12 5.3c1.5 0 2.8.5 3.8 1.5l2.8-2.8C17 2.5 14.7 1.6 12 1.6c-3.8 0-7.4 2.5-9.1 6l3.2 2.5c.8-2.5 3.1-4.8 5.9-4.8Z" />
+            </svg>
+          `)}
+          ${providerTile("telegram", "Telegram", `
           <svg viewBox="0 0 24 24">
             <path d="M21.2 4.4 18 19.5c-.2 1-.8 1.3-1.7.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.3L5.6 13 1 11.6c-1-.3-1-1 .2-1.5L19.3 3c.9-.3 1.6.2 1.9 1.4Z" />
           </svg>
         `)}
-        ${socialButton("google", "Google", ru ? "Войти или зарегистрироваться через Google" : "Sign in or create account with Google", `
-          <svg viewBox="0 0 24 24">
-            <path d="M21.8 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.5c-.2 1.2-.9 2.3-1.9 3v2.5h3.1c1.8-1.6 3.1-4 3.1-7.2Z" />
-            <path d="M12 22c2.7 0 5-.9 6.7-2.5l-3.1-2.5c-.9.6-2 .9-3.6.9-2.8 0-5.1-1.9-5.9-4.4H2.9V16c1.7 3.5 5.3 6 9.1 6Z" />
-            <path d="M6.1 13.5c-.2-.6-.4-1.2-.4-1.9s.1-1.3.4-1.9V7.2H2.9C2.3 8.5 2 10 2 11.6s.3 3.1.9 4.4l3.2-2.5Z" />
-            <path d="M12 5.3c1.5 0 2.8.5 3.8 1.5l2.8-2.8C17 2.5 14.7 1.6 12 1.6c-3.8 0-7.4 2.5-9.1 6l3.2 2.5c.8-2.5 3.1-4.8 5.9-4.8Z" />
+        </div>
+        <div class="auth-divider"><span>${ru ? "или" : "or"}</span></div>
+        <button class="auth-email-button" type="button" data-auth-view="login">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="m4 7 8 6 8-6" />
           </svg>
-        `)}
+          <span>${ru ? "Продолжить через Email" : "Continue with Email"}</span>
+        </button>
+        <p class="auth-signup-line">${ru ? "Нет аккаунта?" : "Don't have an account?"} <button type="button" data-auth-view="register">${ru ? "Зарегистрироваться" : "Sign up"}</button></p>
       </div>
-      <div class="auth-choice-actions">
-        <button class="gold-button auth-primary-button" type="button" data-auth-view="register">${ru ? "Создать аккаунт ANIMA" : "Create ANIMA account"}</button>
-        <button class="secondary-button" type="button" data-auth-view="login">${ru ? "У меня уже есть аккаунт" : "I already have an account"}</button>
+      <div class="auth-portal-stack">
+      <button class="auth-partner-entry auth-portal-card" type="button" data-auth-partner>
+        <span class="auth-portal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 10h16l-1-5H5l-1 5Z" /><path d="M5 10v8h14v-8" /><path d="M9 18v-5h6v5" /></svg>
+        </span>
+        <span class="auth-portal-copy">
+          <strong>${ru ? "Портал партнёра" : "Partner Portal"}</strong>
+          <small>${ru ? "Кабинет, бизнес, заявки и клиенты ANIMA." : "Manage your business, track performance and connect with customers."}</small>
+        </span>
+        <span class="auth-portal-arrow" aria-hidden="true">›</span>
+      </button>
+      <button class="auth-partner-entry auth-portal-card admin" type="button" data-auth-admin>
+        <span class="auth-portal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6l-7-3Z" /><path d="M12 8v6" /><path d="M12 16h.01" /></svg>
+        </span>
+        <span class="auth-portal-copy">
+          <strong>${ru ? "Портал админа" : "Admin Portal"}</strong>
+          <small>${ru ? "Безопасный вход для администрации ANIMA." : "Secure access for ANIMA administrators."}</small>
+        </span>
+        <span class="auth-portal-arrow" aria-hidden="true">›</span>
+      </button>
       </div>
-      <button class="auth-partner-entry" type="button" data-auth-partner>
-        <span>${ru ? "Вход для партнёров" : "Partner dashboard"}</span>
-        <strong>${ru ? "Открыть кабинет партнёра" : "Open partner cabinet"}</strong>
-      </button>
-      <button class="auth-partner-entry admin" type="button" data-auth-admin>
-        <span>${ru ? "Вход для админа" : "Admin dashboard"}</span>
-        <strong>${ru ? "Открыть панель управления" : "Open admin panel"}</strong>
-      </button>
+      <div class="auth-benefit-row" aria-label="ANIMA principles">
+        <span>${ru ? "Одна экосистема" : "One Ecosystem"}</span>
+        <span>${ru ? "Комьюнити" : "Community First"}</span>
+        <span>${ru ? "Рост вместе" : "Growth Together"}</span>
+      </div>
     `;
   }
   if (view === "login") {
