@@ -1642,6 +1642,7 @@ window.ANIMA_DATA = {
         price: "200,000 VND / day",
         specs: "155cc VVA · ABS · smart key · helmet included",
         description: "Sporty automatic scooter for confident city rides and scenic Da Lat routes.",
+        location: "Da Lat center",
         points: 65,
       },
       {
@@ -1653,6 +1654,7 @@ window.ANIMA_DATA = {
         price: "220,000 VND / day",
         specs: "160cc eSP+ · ABS · smart key · large storage",
         description: "Premium automatic scooter with comfort and efficiency for longer day trips.",
+        location: "Da Lat center",
         points: 70,
       },
       {

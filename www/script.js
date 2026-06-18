@@ -326,6 +326,7 @@ function syncRealPartners() {
     tags: [partner.business_type || "partner", partner.email || "", partner.phone || ""].filter(Boolean).slice(0, 3),
     image: "./assets/home-background.jpg",
   }));
+  renderHomePartners();
 }
 
 function getDemoStays() {
@@ -462,6 +463,11 @@ const I18N = {
     "home.search": "Search places, services, experiences...",
     "home.mainSections": "Main Sections",
     "home.ecosystem": "ANIMA Ecosystem",
+    "home.ecosystemSeeAll": "See all",
+    "ecosystem.title": "ANIMA Ecosystem",
+    "ecosystem.subtitle": "Digital ecosystem for opportunities, business and community",
+    "ecosystem.openHub": "Open ANIMA Ecosystem",
+    "ecosystem.closeHub": "Close ANIMA Ecosystem",
     "home.todayUpdates": "Today's updates",
     "home.jobsTitle": "Jobs",
     "home.jobsSubtitle": "Find your next opportunity",
@@ -506,6 +512,7 @@ const I18N = {
     "points.guide.step4": "Points are added automatically to your balance.",
     "points.guide.openRewards": "Open Rewards Center",
     "home.partnersSubtitle": "Local places powering the ΛNIMΛ Dalat ecosystem.",
+    "home.partnersSeeAll": "Browse cafes, hotels, transport and more",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Cafe · Specialty Coffee",
     "home.partner2Title": "Goldient Boutique",
@@ -541,6 +548,11 @@ const I18N = {
     "home.search": "Поиск мест, сервисов, впечатлений...",
     "home.mainSections": "Основные разделы",
     "home.ecosystem": "Экосистема ANIMA",
+    "home.ecosystemSeeAll": "Смотреть все",
+    "ecosystem.title": "Экосистема ANIMA",
+    "ecosystem.subtitle": "Цифровая экосистема возможностей, бизнеса и сообщества",
+    "ecosystem.openHub": "Открыть экосистему ANIMA",
+    "ecosystem.closeHub": "Закрыть экосистему ANIMA",
     "home.todayUpdates": "Сегодняшние обновления",
     "home.jobsTitle": "Работа",
     "home.jobsSubtitle": "Найдите следующую возможность",
@@ -585,6 +597,7 @@ const I18N = {
     "points.guide.step4": "Баллы автоматически зачисляются на баланс.",
     "points.guide.openRewards": "Открыть Rewards Center",
     "home.partnersSubtitle": "Локальные места, которые развивают экосистему ΛNIMΛ в Далате.",
+    "home.partnersSeeAll": "Кафе, отели, транспорт и другие партнёры",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Кафе · Спешелти кофе",
     "home.partner2Title": "Goldient Boutique",
@@ -621,6 +634,7 @@ const I18N = {
     "home.mainSections": "Danh mục chính",
     "home.ecosystem": "Hệ sinh thái ANIMA",
     "home.partners": "Đối tác của chúng tôi",
+    "home.partnersSeeAll": "Khám phá quán cà phê, khách sạn, vận chuyển và hơn thế",
     "home.rewardsTitle": "ANIMA Points",
     "home.rewardsShort": "Tích điểm và đổi lấy các ưu đãi độc quyền.",
     "home.rewardsHint": "Cách hoạt động",
@@ -771,6 +785,14 @@ const phraseTranslations = {
   "Explore routes, rewards and live city points.": "Исследуйте маршруты, бонусы и городские точки.",
   "Curated products from Dalat.": "Отобранные продукты из Далата.",
   "The digital ecosystem of Dalat.": "Цифровая экосистема Далата.",
+  "Digital ecosystem for opportunities, business and community": "Цифровая экосистема возможностей, бизнеса и сообщества",
+  "Real estate, products, services and local goods.": "Недвижимость, товары, услуги и локальные продукты.",
+  "Websites, web apps, CRM and automation for partners.": "Сайты, веб-приложения, CRM и автоматизация для партнёров.",
+  "Digital Solutions for Business": "Цифровые решения для бизнеса",
+  Marketplace: "Маркетплейс",
+  Opportunities: "Возможности",
+  Rewards: "Награды",
+  "About ANIMA": "О платформе ANIMA",
   "Local brands powering the ANIMA ecosystem.": "Локальные бренды, которые развивают экосистему ANIMA.",
   "Reach the ANIMA team and manager support.": "Свяжитесь с командой ANIMA и менеджером поддержки.",
   Nearby: "Рядом",
@@ -1099,6 +1121,30 @@ function scheduleStartupTasks() {
     perfRun("startup.trackVisit", () => window.ANIMA_DB?.trackVisit(baseData));
     perfRun("startup.syncAdminContent", () => syncAdminContent(true));
     perfRun("startup.buildSearchIndex", () => buildSearchIndex());
+    perfRun("startup.renderHomePartners", () => renderHomePartners());
+  });
+}
+
+function renderHomePartners() {
+  const grid = document.querySelector("[data-home-partners-grid]");
+  if (!grid) return;
+  const partners = (data.partners || []).slice(0, 6);
+  if (!partners.length) {
+    grid.innerHTML = "";
+    return;
+  }
+  grid.innerHTML = partners.map((partner) => `
+    <a class="partner-mini-card" href="#" data-screen="partners" style="--partner-thumb: url('${escapeAttr(partner.image || "")}')">
+      <span aria-hidden="true"></span>
+      <strong>${escapeHtml(partner.name)}</strong>
+      <small>${escapeHtml(partner.category || "")}</small>
+    </a>
+  `).join("");
+  grid.querySelectorAll("[data-screen]").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      navigateTo(item.dataset.screen);
+    });
   });
 }
 
@@ -2198,6 +2244,24 @@ const screenConfig = {
     search: "",
     chips: [],
   },
+  ecosystem: {
+    title: "ANIMA Ecosystem",
+    subtitle: "Digital ecosystem for opportunities, business and community",
+    search: "",
+    chips: [],
+  },
+  marketplace: {
+    title: "Marketplace",
+    subtitle: "Real estate, products, services and local goods.",
+    search: "Search listings...",
+    chips: ["All", "Real Estate", "Products", "Services", "Local Goods"],
+  },
+  "digital-solutions": {
+    title: "Digital Solutions for Business",
+    subtitle: "Websites, web apps, CRM and automation for partners.",
+    search: "",
+    chips: [],
+  },
   about: {
     title: "About ANIMA",
     subtitle: "The digital ecosystem of Dalat.",
@@ -2295,6 +2359,7 @@ document.querySelectorAll(".utility-nav a").forEach((item) => {
 syncLanguageState();
 syncTopLanguage();
 applyI18n(document);
+renderHomePartners();
 startLocalTimeTicker();
 refreshNotificationDot();
 scheduleStartupTasks();
@@ -2372,8 +2437,12 @@ languageMenu?.querySelectorAll("button").forEach((button) => {
 });
 
 centerAction?.addEventListener("click", () => {
-  const isOpen = centerAction.getAttribute("aria-expanded") === "true";
-  isOpen ? closeHub() : openHub();
+  if (currentScreen === "ecosystem") {
+    navigateTo("home");
+    return;
+  }
+  closeHub();
+  navigateTo("ecosystem");
 });
 
 animaHub?.querySelectorAll("[data-hub-scan]").forEach((item) => {
@@ -2609,7 +2678,12 @@ function updateBottomNav(screen) {
   document.querySelectorAll(".bottom-nav a[data-screen]").forEach((link) => {
     link.classList.toggle("active", link.dataset.screen === screen);
   });
-  centerAction?.classList.toggle("active", centerAction?.getAttribute("aria-expanded") === "true");
+  const hubOpen = centerAction?.getAttribute("aria-expanded") === "true";
+  centerAction?.classList.toggle("active", hubOpen || screen === "ecosystem");
+  centerAction?.setAttribute(
+    "aria-label",
+    screen === "ecosystem" ? t("ecosystem.closeHub") : t("ecosystem.openHub"),
+  );
 }
 
 function renderHeader(config, options = {}) {
@@ -3304,6 +3378,9 @@ function renderScreen(screen) {
   if (screen === "search") return renderSearchResults(config);
   if (screen === "profile") return renderProfile(config);
   if (screen === "explore") return renderExplore(config);
+  if (screen === "ecosystem") return renderEcosystem(config);
+  if (screen === "marketplace") return renderMarketplace(config);
+  if (screen === "digital-solutions") return renderTechSolutions(localizeConfig(screenConfig["digital-solutions"] || {}));
   if (screen === "anima-plus") return renderAnimaPlusDetails(config);
   if (screen === "rewards") return renderRewardsCenter(config);
   if (screen === "feed") return renderFeed(config);
@@ -3314,7 +3391,18 @@ function renderScreen(screen) {
   if (screen === "community") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Комьюнити ANIMA готовится к запуску." : "ANIMA Community is preparing to launch." });
   if (screen === "stay") return renderStay(config);
   if (screen === "eat") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Кафе и рестораны появятся в следующем релизе." : "Cafes and restaurants are coming in the next release." });
-  if (screen === "experiences") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Туры и впечатления скоро будут доступны." : "Tours and experiences are coming soon." });
+  if (screen === "experiences") {
+    const toursConfig = {
+      ...config,
+      title: translatePhrase("Tours"),
+      subtitle: translatePhrase(isRussianLanguage() ? "Маршруты и программы по Далату." : "Curated journeys around Dalat."),
+    };
+    if (data.experiences.length) return renderExperiences(toursConfig);
+    return renderCleanSection(toursConfig, {
+      title: toursConfig.title,
+      text: isRussianLanguage() ? "Туры и активности скоро будут доступны." : "Tours and activities are coming soon.",
+    });
+  }
   if (screen === "nature") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Природные маршруты скоро будут доступны." : "Nature routes are coming soon." });
   if (screen === "transport") return renderTransport(config);
   if (screen === "for-business") return renderBusiness(config);
@@ -3916,6 +4004,48 @@ function parseVnd(value) {
   return Number(String(value).replace(/[^\d]/g, "")) || 0;
 }
 
+function isTransportRental(item) {
+  return data.transport?.rentals?.some((rental) => rental.title === item?.title);
+}
+
+function transportRentalDescription(item = {}) {
+  const ru = isRussianLanguage();
+  const lead = item.description || (ru ? "Аренда для поездок по Далату." : "Rental for Da Lat rides.");
+  const license = ru
+    ? "Требуется международное водительское удостоверение."
+    : "International driving license required.";
+  const extras = ru
+    ? "Багажник, шлем в комплекте. Самовывоз или доставка."
+    : "Trunk storage, helmet included. Self-pickup or delivery available.";
+  return `${lead} ${license} ${extras}`;
+}
+
+function renderTransportDetail(item) {
+  const ru = isRussianLanguage();
+  const subject = ru ? `Аренда: ${item.title}` : `Rental: ${item.title}`;
+  return `
+    <div class="screen-inner transport-detail-screen">
+      <header class="transport-detail-header">
+        <button class="back-button" type="button" data-back aria-label="Back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <button class="save-button inline ${isSavedTitle(item.title) ? "saved" : ""}" type="button" aria-label="Save ${item.title}" ${saveAttrs(item, "Transport")}>♡</button>
+      </header>
+      <figure class="transport-detail-hero">
+        <img src="${item.image}" alt="" />
+      </figure>
+      <article class="transport-detail-body">
+        <p class="transport-detail-desc">${transportRentalDescription(item)}</p>
+        <div class="transport-detail-meta">
+          <span>${displayItemPrice(item)}</span>
+          <span>${item.location || (ru ? "Далат" : "Da Lat")}</span>
+        </div>
+        <button class="gold-button full-width" type="button" data-request-open data-request-subject="${escapeAttr(subject)}" data-request-cta="${escapeAttr(translatePhrase("Contact manager"))}">${translatePhrase("Contact manager")}</button>
+      </article>
+    </div>
+  `;
+}
+
 function renderDetail(title) {
   const item = findItemByKey(title);
   const isExperience = data.experiences.some((experience) => experience.title === item?.title);
@@ -3923,6 +4053,7 @@ function renderDetail(title) {
   if (isRestaurant) return renderEatDetail(item);
   const isStay = data.stays.some((stay) => stay.title === item?.title);
   if (isStay) return renderStayDetail(item);
+  if (isTransportRental(item)) return renderTransportDetail(item);
   const config = { title: item?.title || "Details", subtitle: item?.category || item?.type || "ANIMA detail view" };
   return `
     <div class="screen-inner">
@@ -4080,6 +4211,96 @@ window.openDetailScreen = openDetailScreen;
 
 function renderScreenExtra(screen) {
   return "";
+}
+
+function renderEcosystem(config) {
+  const ru = isRussianLanguage();
+  const cards = [
+    {
+      title: ru ? "Возможности" : "Opportunities",
+      tags: ru
+        ? ["Работа", "Фриланс", "Бизнес", "Инвестиции", "Партнёрства"]
+        : ["Jobs", "Freelance", "Business Opportunities", "Investments", "Partnerships"],
+      screen: "jobs",
+      icon: "opportunities",
+    },
+    {
+      title: ru ? "Сообщество" : "Community",
+      tags: ru
+        ? ["Сообщество", "Нетворкинг", "События", "Группы", "Digital Nomads"]
+        : ["Community", "Networking", "Events", "Interest Groups", "Digital Nomads"],
+      screen: "community",
+      icon: "community",
+    },
+    {
+      title: ru ? "Для бизнеса" : "For Business",
+      tags: ru
+        ? ["Стать партнёром", "Partner Dashboard", "CRM", "Аналитика", "Листинги"]
+        : ["Become a Partner", "Partner Dashboard", "CRM Tools", "Analytics", "Business Listings"],
+      screen: "for-business",
+      icon: "business",
+    },
+    {
+      title: ru ? "Цифровые решения" : "Digital Solutions for Business",
+      tags: ru
+        ? ["Сайты", "Web Apps", "CRM", "AI-автоматизация", "Маркетинг", "Digitalization"]
+        : ["Websites", "Web Apps", "CRM Systems", "AI Automation", "Digital Marketing", "Business Digitalization"],
+      screen: "digital-solutions",
+      icon: "digital",
+    },
+    {
+      title: ru ? "Награды" : "Rewards",
+      tags: ru
+        ? ["ANIMA Points", "Бонусы", "Premium", "Спецпредложения"]
+        : ["ANIMA Points", "Bonuses", "Premium", "Special Offers"],
+      screen: "rewards",
+      icon: "rewards",
+    },
+    {
+      title: ru ? "Маркетплейс" : "Marketplace",
+      tags: ru
+        ? ["Недвижимость", "Товары", "Услуги", "Локальные продукты"]
+        : ["Real Estate", "Products", "Services", "Local Goods"],
+      screen: "marketplace",
+      icon: "marketplace",
+    },
+    {
+      title: ru ? "О платформе ANIMA" : "About ANIMA",
+      tags: ru
+        ? ["Миссия", "Develop Dalat", "Партнёры", "Контакты"]
+        : ["Mission", "Develop Dalat", "Partners", "Contact Us"],
+      screen: "about",
+      icon: "about",
+      wide: true,
+    },
+  ];
+  const icons = {
+    opportunities: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
+    community: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="3"/><path d="M17 15a5 5 0 0 1 5 5"/></svg>`,
+    business: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 3 3a3 3 0 0 0 4.2 0L22 8.2 18.8 5 12 11.8"/><path d="m16 12-4-4-6 6a3 3 0 0 0 4.2 4.2l1.8-1.8"/></svg>`,
+    digital: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="m10 13-2 2 2 2"/><path d="m14 13 2 2-2 2"/></svg>`,
+    rewards: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
+    marketplace: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
+    about: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/></svg>`,
+  };
+  const card = (item) => `
+    <button class="ecosystem-card ${item.wide ? "ecosystem-card-wide" : ""}" type="button" data-screen="${item.screen}">
+      <span class="ecosystem-card-icon">${icons[item.icon]}</span>
+      <span class="ecosystem-card-copy">
+        <strong>${item.title}</strong>
+        <span class="ecosystem-tags">${item.tags.map((tag) => `<em>${tag}</em>`).join("")}</span>
+      </span>
+      <span class="round-arrow" aria-hidden="true">→</span>
+    </button>
+  `;
+  return `
+    <div class="screen-inner ecosystem-screen">
+      ${renderHeader(config, { back: true })}
+      <section class="ecosystem-grid" aria-label="${ru ? "Разделы экосистемы ANIMA" : "ANIMA Ecosystem sections"}">
+        ${cards.map(card).join("")}
+      </section>
+    </div>
+  `;
 }
 
 function renderExplore(config) {
@@ -4331,17 +4552,16 @@ function renderTransportContent(category) {
 
 function transportRentalCard(item) {
   return `
-    <article class="transport-card" data-detail="${item.title}">
-      <img src="${item.image}" alt="" />
+    <article class="transport-card transport-card-minimal" data-detail="${item.title}">
+      <div class="transport-card-media">
+        <img src="${item.image}" alt="" />
+      </div>
       <div class="transport-card-body">
         <div class="transport-card-top">
-          <p>${item.type}</p>
-          <button class="save-button inline" type="button" aria-label="Save ${item.title}">♡</button>
+          <h2>${item.title}</h2>
+          <button class="save-button inline ${isSavedTitle(item.title) ? "saved" : ""}" type="button" aria-label="Save ${item.title}" ${saveAttrs(item, "Transport")}>♡</button>
         </div>
-        <h2>${item.title}</h2>
-        <span>★ ${item.rating} · ${displayItemPrice(item)}</span>
-        <small>${item.specs}</small>
-        <a class="gold-button" href="#">View details</a>
+        <span class="transport-card-price">${displayItemPrice(item)}</span>
       </div>
     </article>
   `;
@@ -4569,6 +4789,72 @@ function renderMarketplaceFeed() {
     : `<article class="empty-state thread-empty"><h3>${translatePhrase("Classifieds")}</h3><p>${isRussianLanguage() ? "Пока нет объявлений. Войдите и добавьте первое." : "No classifieds yet. Sign in and add the first one."}</p></article>`;
 }
 
+function renderMarketplace(config) {
+  return `
+    <div class="screen-inner marketplace-screen">
+      ${renderHeader(config, { back: true })}
+      ${renderFilterChips(config)}
+      <section class="marketplace-compose-wrap">
+        ${renderFeedCompose("Classifieds")}
+      </section>
+      <section class="marketplace-list" data-marketplace-list>
+        ${renderMarketplaceFeed()}
+      </section>
+    </div>
+  `;
+}
+
+function bindMarketplaceActions() {
+  const root = screenView.querySelector(".marketplace-screen");
+  if (!root || root.dataset.marketplaceBound === "1") return;
+  root.dataset.marketplaceBound = "1";
+  root.addEventListener("click", (event) => {
+    if (event.target.closest("[data-feed-marketplace-auth]")) {
+      openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
+      return;
+    }
+    if (event.target.closest("[data-feed-marketplace-compose]")) {
+      openMarketplaceComposeModal();
+      return;
+    }
+    const marketplaceCardEl = event.target.closest("[data-marketplace-id]");
+    if (!marketplaceCardEl) return;
+    const item = getMarketplaceItems().find((entry) => String(entry.id) === marketplaceCardEl.dataset.marketplaceId);
+    if (!item) return;
+    if (event.target.closest("[data-marketplace-contact]")) {
+      openActionModal(
+        translatePhrase("Contact seller"),
+        `${item.author}: ${item.contact || managerTelegram.handle}`,
+      );
+      return;
+    }
+    if (event.target.closest("[data-marketplace-share]")) {
+      openActionModal(
+        translatePhrase("Share"),
+        isRussianLanguage()
+          ? `Поделиться: «${item.title}» за ${item.price}.`
+          : `Share "${item.title}" for ${item.price}.`,
+      );
+    }
+  });
+  root.querySelectorAll(".filter-chips button").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.parentElement.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      const filter = button.textContent.trim();
+      const list = root.querySelector("[data-marketplace-list]");
+      if (!list) return;
+      const items = getMarketplaceItems();
+      const filtered = filter === "All" || filter === translatePhrase("All")
+        ? items
+        : items.filter((item) => String(item.category || "").toLowerCase().includes(filter.toLowerCase().split(" ")[0]));
+      list.innerHTML = filtered.length
+        ? filtered.map(marketplaceCard).join("")
+        : `<article class="empty-state thread-empty"><h3>${filter}</h3><p>${isRussianLanguage() ? "Пока нет объявлений в этой категории." : "No listings in this category yet."}</p></article>`;
+    });
+  });
+}
+
 function openMarketplaceComposeModal() {
   if (!isAuthenticatedUser()) {
     return openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
@@ -4618,6 +4904,10 @@ function openMarketplaceComposeModal() {
     modal.remove();
     if (currentScreen === "feed" && feedFilters.tab === "Classifieds") {
       const list = screenView.querySelector("[data-feed-list]");
+      if (list) list.innerHTML = renderMarketplaceFeed();
+    }
+    if (currentScreen === "marketplace") {
+      const list = screenView.querySelector("[data-marketplace-list]");
       if (list) list.innerHTML = renderMarketplaceFeed();
     }
     openInfoModal(
@@ -5656,6 +5946,7 @@ function bindScreenActions() {
   });
   bindStoreActions();
   bindFeedActions();
+  bindMarketplaceActions();
   screenView.querySelectorAll("[data-profile-action]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -5715,6 +6006,7 @@ function bindScreenActions() {
   });
   bindBookingForms();
   bindBusinessForms();
+  bindTransportDynamicActions();
   bindStayGalleryGrid();
   bindStayBookAction();
 }

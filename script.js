@@ -326,6 +326,7 @@ function syncRealPartners() {
     tags: [partner.business_type || "partner", partner.email || "", partner.phone || ""].filter(Boolean).slice(0, 3),
     image: "./assets/home-background.jpg",
   }));
+  renderHomePartners();
 }
 
 function getDemoStays() {
@@ -462,6 +463,11 @@ const I18N = {
     "home.search": "Search places, services, experiences...",
     "home.mainSections": "Main Sections",
     "home.ecosystem": "ANIMA Ecosystem",
+    "home.ecosystemSeeAll": "See all",
+    "ecosystem.title": "ANIMA Ecosystem",
+    "ecosystem.subtitle": "Digital ecosystem for opportunities, business and community",
+    "ecosystem.openHub": "Open ANIMA Ecosystem",
+    "ecosystem.closeHub": "Close ANIMA Ecosystem",
     "home.todayUpdates": "Today's updates",
     "home.jobsTitle": "Jobs",
     "home.jobsSubtitle": "Find your next opportunity",
@@ -506,6 +512,7 @@ const I18N = {
     "points.guide.step4": "Points are added automatically to your balance.",
     "points.guide.openRewards": "Open Rewards Center",
     "home.partnersSubtitle": "Local places powering the ΛNIMΛ Dalat ecosystem.",
+    "home.partnersSeeAll": "Browse cafes, hotels, transport and more",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Cafe · Specialty Coffee",
     "home.partner2Title": "Goldient Boutique",
@@ -541,6 +548,11 @@ const I18N = {
     "home.search": "Поиск мест, сервисов, впечатлений...",
     "home.mainSections": "Основные разделы",
     "home.ecosystem": "Экосистема ANIMA",
+    "home.ecosystemSeeAll": "Смотреть все",
+    "ecosystem.title": "Экосистема ANIMA",
+    "ecosystem.subtitle": "Цифровая экосистема возможностей, бизнеса и сообщества",
+    "ecosystem.openHub": "Открыть экосистему ANIMA",
+    "ecosystem.closeHub": "Закрыть экосистему ANIMA",
     "home.todayUpdates": "Сегодняшние обновления",
     "home.jobsTitle": "Работа",
     "home.jobsSubtitle": "Найдите следующую возможность",
@@ -585,6 +597,7 @@ const I18N = {
     "points.guide.step4": "Баллы автоматически зачисляются на баланс.",
     "points.guide.openRewards": "Открыть Rewards Center",
     "home.partnersSubtitle": "Локальные места, которые развивают экосистему ΛNIMΛ в Далате.",
+    "home.partnersSeeAll": "Кафе, отели, транспорт и другие партнёры",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Кафе · Спешелти кофе",
     "home.partner2Title": "Goldient Boutique",
@@ -621,6 +634,7 @@ const I18N = {
     "home.mainSections": "Danh mục chính",
     "home.ecosystem": "Hệ sinh thái ANIMA",
     "home.partners": "Đối tác của chúng tôi",
+    "home.partnersSeeAll": "Khám phá quán cà phê, khách sạn, vận chuyển và hơn thế",
     "home.rewardsTitle": "ANIMA Points",
     "home.rewardsShort": "Tích điểm và đổi lấy các ưu đãi độc quyền.",
     "home.rewardsHint": "Cách hoạt động",
@@ -771,6 +785,14 @@ const phraseTranslations = {
   "Explore routes, rewards and live city points.": "Исследуйте маршруты, бонусы и городские точки.",
   "Curated products from Dalat.": "Отобранные продукты из Далата.",
   "The digital ecosystem of Dalat.": "Цифровая экосистема Далата.",
+  "Digital ecosystem for opportunities, business and community": "Цифровая экосистема возможностей, бизнеса и сообщества",
+  "Real estate, products, services and local goods.": "Недвижимость, товары, услуги и локальные продукты.",
+  "Websites, web apps, CRM and automation for partners.": "Сайты, веб-приложения, CRM и автоматизация для партнёров.",
+  "Digital Solutions for Business": "Цифровые решения для бизнеса",
+  Marketplace: "Маркетплейс",
+  Opportunities: "Возможности",
+  Rewards: "Награды",
+  "About ANIMA": "О платформе ANIMA",
   "Local brands powering the ANIMA ecosystem.": "Локальные бренды, которые развивают экосистему ANIMA.",
   "Reach the ANIMA team and manager support.": "Свяжитесь с командой ANIMA и менеджером поддержки.",
   Nearby: "Рядом",
@@ -1099,6 +1121,30 @@ function scheduleStartupTasks() {
     perfRun("startup.trackVisit", () => window.ANIMA_DB?.trackVisit(baseData));
     perfRun("startup.syncAdminContent", () => syncAdminContent(true));
     perfRun("startup.buildSearchIndex", () => buildSearchIndex());
+    perfRun("startup.renderHomePartners", () => renderHomePartners());
+  });
+}
+
+function renderHomePartners() {
+  const grid = document.querySelector("[data-home-partners-grid]");
+  if (!grid) return;
+  const partners = (data.partners || []).slice(0, 6);
+  if (!partners.length) {
+    grid.innerHTML = "";
+    return;
+  }
+  grid.innerHTML = partners.map((partner) => `
+    <a class="partner-mini-card" href="#" data-screen="partners" style="--partner-thumb: url('${escapeAttr(partner.image || "")}')">
+      <span aria-hidden="true"></span>
+      <strong>${escapeHtml(partner.name)}</strong>
+      <small>${escapeHtml(partner.category || "")}</small>
+    </a>
+  `).join("");
+  grid.querySelectorAll("[data-screen]").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      navigateTo(item.dataset.screen);
+    });
   });
 }
 
@@ -2198,6 +2244,24 @@ const screenConfig = {
     search: "",
     chips: [],
   },
+  ecosystem: {
+    title: "ANIMA Ecosystem",
+    subtitle: "Marketplace, rewards and the ANIMA platform hub",
+    search: "",
+    chips: [],
+  },
+  marketplace: {
+    title: "Marketplace",
+    subtitle: "Real estate, products, services and local goods.",
+    search: "Search listings...",
+    chips: ["All", "Real Estate", "Products", "Services", "Local Goods"],
+  },
+  "digital-solutions": {
+    title: "Digital Solutions for Business",
+    subtitle: "Websites, web apps, CRM and automation for partners.",
+    search: "",
+    chips: [],
+  },
   about: {
     title: "About ANIMA",
     subtitle: "The digital ecosystem of Dalat.",
@@ -2262,7 +2326,7 @@ const dataMap = {
 document.querySelectorAll("[data-screen]").forEach((item) => {
   item.addEventListener("click", (event) => {
     event.preventDefault();
-    navigateTo(item.dataset.screen);
+    navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
   });
 });
 
@@ -2295,6 +2359,7 @@ document.querySelectorAll(".utility-nav a").forEach((item) => {
 syncLanguageState();
 syncTopLanguage();
 applyI18n(document);
+renderHomePartners();
 startLocalTimeTicker();
 refreshNotificationDot();
 scheduleStartupTasks();
@@ -2372,8 +2437,12 @@ languageMenu?.querySelectorAll("button").forEach((button) => {
 });
 
 centerAction?.addEventListener("click", () => {
-  const isOpen = centerAction.getAttribute("aria-expanded") === "true";
-  isOpen ? closeHub() : openHub();
+  if (currentScreen === "ecosystem") {
+    navigateTo("home");
+    return;
+  }
+  closeHub();
+  navigateTo("ecosystem");
 });
 
 animaHub?.querySelectorAll("[data-hub-scan]").forEach((item) => {
@@ -2565,6 +2634,7 @@ function refreshCurrentScreenFromAdmin() {
 
 function navigateTo(screen, options = {}) {
   syncAdminContent();
+  if (options.feedTab) feedFilters.tab = options.feedTab;
   if (!options.preserveHistory && screen !== currentScreen) {
     previousScreen = currentScreen;
     navigationStack.push(screen);
@@ -2609,7 +2679,12 @@ function updateBottomNav(screen) {
   document.querySelectorAll(".bottom-nav a[data-screen]").forEach((link) => {
     link.classList.toggle("active", link.dataset.screen === screen);
   });
-  centerAction?.classList.toggle("active", centerAction?.getAttribute("aria-expanded") === "true");
+  const hubOpen = centerAction?.getAttribute("aria-expanded") === "true";
+  centerAction?.classList.toggle("active", hubOpen || screen === "ecosystem");
+  centerAction?.setAttribute(
+    "aria-label",
+    screen === "ecosystem" ? t("ecosystem.closeHub") : t("ecosystem.openHub"),
+  );
 }
 
 function renderHeader(config, options = {}) {
@@ -3304,6 +3379,9 @@ function renderScreen(screen) {
   if (screen === "search") return renderSearchResults(config);
   if (screen === "profile") return renderProfile(config);
   if (screen === "explore") return renderExplore(config);
+  if (screen === "ecosystem") return renderEcosystem(config);
+  if (screen === "marketplace") return renderMarketplace(config);
+  if (screen === "digital-solutions") return renderTechSolutions(localizeConfig(screenConfig["digital-solutions"] || {}));
   if (screen === "anima-plus") return renderAnimaPlusDetails(config);
   if (screen === "rewards") return renderRewardsCenter(config);
   if (screen === "feed") return renderFeed(config);
@@ -3314,7 +3392,18 @@ function renderScreen(screen) {
   if (screen === "community") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Комьюнити ANIMA готовится к запуску." : "ANIMA Community is preparing to launch." });
   if (screen === "stay") return renderStay(config);
   if (screen === "eat") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Кафе и рестораны появятся в следующем релизе." : "Cafes and restaurants are coming in the next release." });
-  if (screen === "experiences") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Туры и впечатления скоро будут доступны." : "Tours and experiences are coming soon." });
+  if (screen === "experiences") {
+    const toursConfig = {
+      ...config,
+      title: translatePhrase("Tours"),
+      subtitle: translatePhrase(isRussianLanguage() ? "Маршруты и программы по Далату." : "Curated journeys around Dalat."),
+    };
+    if (data.experiences.length) return renderExperiences(toursConfig);
+    return renderCleanSection(toursConfig, {
+      title: toursConfig.title,
+      text: isRussianLanguage() ? "Туры и активности скоро будут доступны." : "Tours and activities are coming soon.",
+    });
+  }
   if (screen === "nature") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Природные маршруты скоро будут доступны." : "Nature routes are coming soon." });
   if (screen === "transport") return renderTransport(config);
   if (screen === "for-business") return renderBusiness(config);
@@ -3916,6 +4005,48 @@ function parseVnd(value) {
   return Number(String(value).replace(/[^\d]/g, "")) || 0;
 }
 
+function isTransportRental(item) {
+  return data.transport?.rentals?.some((rental) => rental.title === item?.title);
+}
+
+function transportRentalDescription(item = {}) {
+  const ru = isRussianLanguage();
+  const lead = item.description || (ru ? "Аренда для поездок по Далату." : "Rental for Da Lat rides.");
+  const license = ru
+    ? "Требуется международное водительское удостоверение."
+    : "International driving license required.";
+  const extras = ru
+    ? "Багажник, шлем в комплекте. Самовывоз или доставка."
+    : "Trunk storage, helmet included. Self-pickup or delivery available.";
+  return `${lead} ${license} ${extras}`;
+}
+
+function renderTransportDetail(item) {
+  const ru = isRussianLanguage();
+  const subject = ru ? `Аренда: ${item.title}` : `Rental: ${item.title}`;
+  return `
+    <div class="screen-inner transport-detail-screen">
+      <header class="transport-detail-header">
+        <button class="back-button" type="button" data-back aria-label="Back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <button class="save-button inline ${isSavedTitle(item.title) ? "saved" : ""}" type="button" aria-label="Save ${item.title}" ${saveAttrs(item, "Transport")}>♡</button>
+      </header>
+      <figure class="transport-detail-hero">
+        <img src="${item.image}" alt="" />
+      </figure>
+      <article class="transport-detail-body">
+        <p class="transport-detail-desc">${transportRentalDescription(item)}</p>
+        <div class="transport-detail-meta">
+          <span>${displayItemPrice(item)}</span>
+          <span>${item.location || (ru ? "Далат" : "Da Lat")}</span>
+        </div>
+        <button class="gold-button full-width" type="button" data-request-open data-request-subject="${escapeAttr(subject)}" data-request-cta="${escapeAttr(translatePhrase("Contact manager"))}">${translatePhrase("Contact manager")}</button>
+      </article>
+    </div>
+  `;
+}
+
 function renderDetail(title) {
   const item = findItemByKey(title);
   const isExperience = data.experiences.some((experience) => experience.title === item?.title);
@@ -3923,6 +4054,7 @@ function renderDetail(title) {
   if (isRestaurant) return renderEatDetail(item);
   const isStay = data.stays.some((stay) => stay.title === item?.title);
   if (isStay) return renderStayDetail(item);
+  if (isTransportRental(item)) return renderTransportDetail(item);
   const config = { title: item?.title || "Details", subtitle: item?.category || item?.type || "ANIMA detail view" };
   return `
     <div class="screen-inner">
@@ -4080,6 +4212,74 @@ window.openDetailScreen = openDetailScreen;
 
 function renderScreenExtra(screen) {
   return "";
+}
+
+function renderEcosystem(config) {
+  const ru = isRussianLanguage();
+  const cards = [
+    {
+      title: ru ? "Маркетплейс" : "Marketplace",
+      desc: ru
+        ? "Партнёрства, инвестиции и объявления в ленте"
+        : "Partnerships, investments and classifieds in Feed",
+      tags: ru
+        ? ["Объявления", "Партнёрства", "Инвестиции", "Недвижимость"]
+        : ["Classifieds", "Partnerships", "Investments", "Real Estate"],
+      screen: "feed",
+      feedTab: "Classifieds",
+      icon: "marketplace",
+    },
+    {
+      title: ru ? "Награды" : "Rewards",
+      desc: ru
+        ? "ANIMA Points, бонусы и премиум-предложения"
+        : "ANIMA Points, bonuses and premium offers",
+      tags: ru
+        ? ["ANIMA Points", "Бонусы", "Premium", "Спецпредложения"]
+        : ["ANIMA Points", "Bonuses", "Premium", "Special Offers"],
+      screen: "rewards",
+      icon: "rewards",
+    },
+    {
+      title: ru ? "О платформе ANIMA" : "About ANIMA",
+      desc: ru
+        ? "Миссия, идея, партнёры и развитие Далата"
+        : "Mission, idea, partners and developing Dalat",
+      tags: ru
+        ? ["Миссия", "Develop Dalat", "Партнёры", "Контакты"]
+        : ["Mission", "Develop Dalat", "Partners", "Contact Us"],
+      screen: "about",
+      icon: "about",
+      wide: true,
+    },
+  ];
+  const icons = {
+    rewards: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
+    marketplace: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
+    about: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/></svg>`,
+  };
+  const card = (item) => `
+    <button class="ecosystem-card ${item.wide ? "ecosystem-card-wide" : ""}" type="button" data-screen="${item.screen}"${item.feedTab ? ` data-feed-tab="${item.feedTab}"` : ""}>
+      <span class="ecosystem-card-icon">${icons[item.icon]}</span>
+      <span class="ecosystem-card-copy">
+        <strong>${item.title}</strong>
+        <span class="ecosystem-card-desc">${item.desc}</span>
+        <span class="ecosystem-tags">${item.tags.map((tag) => `<em>${tag}</em>`).join("")}</span>
+      </span>
+      <span class="round-arrow" aria-hidden="true">→</span>
+    </button>
+  `;
+  return `
+    <div class="screen-inner ecosystem-screen">
+      ${renderHeader(config, { back: true })}
+      <p class="ecosystem-lead">${ru
+        ? "Центральный портал платформы. Работа, бизнес, цифровые решения и сообщество — на главном экране и в ленте."
+        : "Central platform portal. Jobs, business, digital solutions and community live on Home and Feed."}</p>
+      <section class="ecosystem-grid" aria-label="${ru ? "Разделы экосистемы ANIMA" : "ANIMA Ecosystem sections"}">
+        ${cards.map(card).join("")}
+      </section>
+    </div>
+  `;
 }
 
 function renderExplore(config) {
@@ -4331,17 +4531,16 @@ function renderTransportContent(category) {
 
 function transportRentalCard(item) {
   return `
-    <article class="transport-card" data-detail="${item.title}">
-      <img src="${item.image}" alt="" />
+    <article class="transport-card transport-card-minimal" data-detail="${item.title}">
+      <div class="transport-card-media">
+        <img src="${item.image}" alt="" />
+      </div>
       <div class="transport-card-body">
         <div class="transport-card-top">
-          <p>${item.type}</p>
-          <button class="save-button inline" type="button" aria-label="Save ${item.title}">♡</button>
+          <h2>${item.title}</h2>
+          <button class="save-button inline ${isSavedTitle(item.title) ? "saved" : ""}" type="button" aria-label="Save ${item.title}" ${saveAttrs(item, "Transport")}>♡</button>
         </div>
-        <h2>${item.title}</h2>
-        <span>★ ${item.rating} · ${displayItemPrice(item)}</span>
-        <small>${item.specs}</small>
-        <a class="gold-button" href="#">View details</a>
+        <span class="transport-card-price">${displayItemPrice(item)}</span>
       </div>
     </article>
   `;
@@ -4569,6 +4768,72 @@ function renderMarketplaceFeed() {
     : `<article class="empty-state thread-empty"><h3>${translatePhrase("Classifieds")}</h3><p>${isRussianLanguage() ? "Пока нет объявлений. Войдите и добавьте первое." : "No classifieds yet. Sign in and add the first one."}</p></article>`;
 }
 
+function renderMarketplace(config) {
+  return `
+    <div class="screen-inner marketplace-screen">
+      ${renderHeader(config, { back: true })}
+      ${renderFilterChips(config)}
+      <section class="marketplace-compose-wrap">
+        ${renderFeedCompose("Classifieds")}
+      </section>
+      <section class="marketplace-list" data-marketplace-list>
+        ${renderMarketplaceFeed()}
+      </section>
+    </div>
+  `;
+}
+
+function bindMarketplaceActions() {
+  const root = screenView.querySelector(".marketplace-screen");
+  if (!root || root.dataset.marketplaceBound === "1") return;
+  root.dataset.marketplaceBound = "1";
+  root.addEventListener("click", (event) => {
+    if (event.target.closest("[data-feed-marketplace-auth]")) {
+      openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
+      return;
+    }
+    if (event.target.closest("[data-feed-marketplace-compose]")) {
+      openMarketplaceComposeModal();
+      return;
+    }
+    const marketplaceCardEl = event.target.closest("[data-marketplace-id]");
+    if (!marketplaceCardEl) return;
+    const item = getMarketplaceItems().find((entry) => String(entry.id) === marketplaceCardEl.dataset.marketplaceId);
+    if (!item) return;
+    if (event.target.closest("[data-marketplace-contact]")) {
+      openActionModal(
+        translatePhrase("Contact seller"),
+        `${item.author}: ${item.contact || managerTelegram.handle}`,
+      );
+      return;
+    }
+    if (event.target.closest("[data-marketplace-share]")) {
+      openActionModal(
+        translatePhrase("Share"),
+        isRussianLanguage()
+          ? `Поделиться: «${item.title}» за ${item.price}.`
+          : `Share "${item.title}" for ${item.price}.`,
+      );
+    }
+  });
+  root.querySelectorAll(".filter-chips button").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.parentElement.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      const filter = button.textContent.trim();
+      const list = root.querySelector("[data-marketplace-list]");
+      if (!list) return;
+      const items = getMarketplaceItems();
+      const filtered = filter === "All" || filter === translatePhrase("All")
+        ? items
+        : items.filter((item) => String(item.category || "").toLowerCase().includes(filter.toLowerCase().split(" ")[0]));
+      list.innerHTML = filtered.length
+        ? filtered.map(marketplaceCard).join("")
+        : `<article class="empty-state thread-empty"><h3>${filter}</h3><p>${isRussianLanguage() ? "Пока нет объявлений в этой категории." : "No listings in this category yet."}</p></article>`;
+    });
+  });
+}
+
 function openMarketplaceComposeModal() {
   if (!isAuthenticatedUser()) {
     return openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
@@ -4618,6 +4883,10 @@ function openMarketplaceComposeModal() {
     modal.remove();
     if (currentScreen === "feed" && feedFilters.tab === "Classifieds") {
       const list = screenView.querySelector("[data-feed-list]");
+      if (list) list.innerHTML = renderMarketplaceFeed();
+    }
+    if (currentScreen === "marketplace") {
+      const list = screenView.querySelector("[data-marketplace-list]");
       if (list) list.innerHTML = renderMarketplaceFeed();
     }
     openInfoModal(
@@ -5385,38 +5654,122 @@ function renderAnimaPlusDetails(config) {
   `;
 }
 
-function renderAbout(config) {
-  const sections = [
-    ["What is ANIMA", "ANIMA is a modern lifestyle and travel ecosystem connecting Dalat's best places, services, experiences and community in one calm digital space."],
-    ["Our Mission", "We are building more than a location app: ANIMA is a digital layer for living, exploring, working, meeting people and discovering the local culture of Dalat."],
-    ["Community", "Travelers, locals, expats and digital nomads can save places, share experiences, discover events and become part of a living city network."],
-    ["For Travelers", "Find curated cafes, restaurants, stays, hidden gems, transport and premium experiences without losing the atmosphere of the city."],
-    ["For Digital Nomads", "Use ANIMA as a soft entry point into work-friendly cafes, long stays, services, community meetups and local opportunities."],
-    ["For Businesses & Partners", "Partners can reach a high-intent audience, promote services, join QR rewards and grow through the ANIMA ecosystem."],
-    ["Ecosystem Vision", "ANIMA unites travel, lifestyle, community, local business, digital services and immersive city experience into one premium platform."],
-  ];
+function renderAboutPlatform(config) {
+  const ru = isRussianLanguage();
+  const pillars = ru
+    ? [
+        ["Explore", "Проживание, еда, природа, транспорт и сервисы — кураторский Далат."],
+        ["Feed", "Лента, события, форум, объявления и городская социальная активность."],
+        ["Business", "Партнёрство, листинги, CRM-инструменты и цифровые решения для бизнеса."],
+        ["Rewards", "ANIMA Points, бонусы, премиум и спецпредложения от партнёров."],
+      ]
+    : [
+        ["Explore", "Stay, food, nature, transport and services — curated Dalat."],
+        ["Feed", "Ribbon, events, forum, classifieds and city social activity."],
+        ["Business", "Partnership, listings, CRM tools and digital solutions for partners."],
+        ["Rewards", "ANIMA Points, bonuses, premium and special partner offers."],
+      ];
+  const audiences = ru
+    ? [
+        ["Для путешественников", "Кафе, рестораны, проживание, скрытые места и премиум-опыт без потери атмосферы города."],
+        ["Для digital nomads", "Рабочие кафе, долгие стейи, сервисы, встречи и локальные возможности в одном приложении."],
+        ["Для бизнеса", "Доступ к аудитории с намерением, QR-награды, продвижение и рост через экосистему ANIMA."],
+      ]
+    : [
+        ["For travelers", "Cafes, restaurants, stays, hidden gems and premium experiences without losing the city's atmosphere."],
+        ["For digital nomads", "Work-friendly cafes, long stays, services, meetups and local opportunities in one app."],
+        ["For business", "High-intent audience reach, QR rewards, promotion and growth through the ANIMA ecosystem."],
+      ];
   return `
-    <div class="screen-inner about-screen">
+    <div class="screen-inner about-platform-screen">
       ${renderHeader(config, { back: true })}
-      <section class="about-hero">
+
+      <section class="about-platform-hero">
         <p class="brand-kicker">ΛNIMΛ Dalat</p>
-        <h2>A city ecosystem inspired by nature, movement and digital lifestyle.</h2>
-        <p>Curated places. Local partners. Community energy. Premium tools for a deeper Dalat experience.</p>
+        <h2>${ru
+          ? "Цифровая экосистема города: природа, движение и современный lifestyle"
+          : "A city digital ecosystem of nature, movement and modern lifestyle"}</h2>
+        <p class="about-platform-lead">${ru
+          ? "ANIMA объединяет лучшие места, сервисы, опыт, бизнес и сообщество Далата в одном спокойном премиальном пространстве."
+          : "ANIMA connects Dalat's best places, services, experiences, business and community in one calm premium space."}</p>
       </section>
-      <section class="about-grid">
-        ${sections.map(([title, text]) => `<article><span>✦</span><h3>${title}</h3><p>${text}</p></article>`).join("")}
+
+      <section class="about-platform-block">
+        <span class="about-platform-kicker">${ru ? "Наша идея" : "Our idea"}</span>
+        <h3>${ru ? "Больше, чем travel-приложение" : "More than a travel app"}</h3>
+        <p>${ru
+          ? "Мы создаём цифровой слой для жизни, исследования, работы и знакомства с культурой Далата — от утреннего кофе до партнёрских инструментов и городской ленты."
+          : "We are building a digital layer for living, exploring, working and discovering Dalat's culture — from morning coffee to partner tools and the city feed."}</p>
       </section>
-      <section class="about-cta">
-        <h2>Build Dalat with ANIMA.</h2>
-        <p>Join the community, become a partner, or follow the platform as the ecosystem grows.</p>
+
+      <section class="about-platform-block about-platform-mission">
+        <span class="about-platform-kicker">${ru ? "Миссия" : "Mission"}</span>
+        <h3>Develop Dalat</h3>
+        <p>${ru
+          ? "Развивать город через локальных партнёров, осмысленный туризм, цифровизацию бизнеса и живое сообщество — чтобы Далат рос как экосистема, а не как набор разрозненных сервисов."
+          : "Grow the city through local partners, meaningful tourism, business digitalization and a living community — so Dalat evolves as an ecosystem, not scattered services."}</p>
+      </section>
+
+      <section class="about-platform-pillars">
+        <div class="about-platform-section-head">
+          <span class="about-platform-kicker">${ru ? "Платформа" : "Platform"}</span>
+          <h3>${ru ? "Четыре опоры ANIMA" : "Four pillars of ANIMA"}</h3>
+        </div>
+        <div class="about-platform-pillar-grid">
+          ${pillars.map(([title, text], index) => `
+            <article>
+              <span class="about-platform-index">0${index + 1}</span>
+              <h4>${title}</h4>
+              <p>${text}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="about-platform-audiences">
+        <div class="about-platform-section-head">
+          <span class="about-platform-kicker">${ru ? "Для кого" : "Who it's for"}</span>
+          <h3>${ru ? "Кому помогает ANIMA" : "Who ANIMA serves"}</h3>
+        </div>
+        <div class="about-platform-audience-list">
+          ${audiences.map(([title, text]) => `
+            <article>
+              <h4>${title}</h4>
+              <p>${text}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="about-platform-partners">
         <div>
-          <a class="gold-button" href="#" data-screen="for-business">Become a Partner</a>
-          <a class="mini-cta" href="#" data-screen="community">Join Community</a>
-          <a class="mini-cta" href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener">Follow ANIMA</a>
+          <span class="about-platform-kicker">${ru ? "Партнёры" : "Partners"}</span>
+          <h3>${ru ? "Локальные бренды экосистемы" : "Local brands powering the ecosystem"}</h3>
+          <p>${ru
+            ? "Кофейни, рестораны, отели, сервисы и креаторы Далата — вместе формируют премиальный опыт ANIMA."
+            : "Cafes, restaurants, hotels, services and creators in Dalat — together shaping the premium ANIMA experience."}</p>
+        </div>
+        <button class="mini-cta" type="button" data-screen="partners">${ru ? "Наши партнёры →" : "Our partners →"}</button>
+      </section>
+
+      <section class="about-platform-cta">
+        <h3>${ru ? "Стройте Далат вместе с ANIMA" : "Build Dalat with ANIMA"}</h3>
+        <p>${ru
+          ? "Станьте партнёром, следите за платформой или напишите команде — экосистема растёт вместе с городом."
+          : "Become a partner, follow the platform or reach the team — the ecosystem grows with the city."}</p>
+        <div class="about-platform-cta-actions">
+          <a class="gold-button" href="#" data-screen="for-business">${ru ? "Стать партнёром" : "Become a Partner"}</a>
+          <a class="mini-cta" href="#" data-screen="feed" data-feed-tab="Forum">${ru ? "Лента и сообщество" : "Feed & community"}</a>
+          <a class="mini-cta" href="#" data-screen="contact">${ru ? "Связаться" : "Contact Us"}</a>
+          <a class="mini-cta" href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener">Instagram</a>
         </div>
       </section>
     </div>
   `;
+}
+
+function renderAbout(config) {
+  return renderAboutPlatform(config);
 }
 
 function renderPartners(config) {
@@ -5590,7 +5943,7 @@ function bindScreenActions() {
   screenView.querySelectorAll("[data-screen]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      navigateTo(item.dataset.screen);
+      navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
     });
   });
   screenView.querySelectorAll(".filter-chips button").forEach((button) => {
@@ -5656,6 +6009,7 @@ function bindScreenActions() {
   });
   bindStoreActions();
   bindFeedActions();
+  bindMarketplaceActions();
   screenView.querySelectorAll("[data-profile-action]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -5715,6 +6069,7 @@ function bindScreenActions() {
   });
   bindBookingForms();
   bindBusinessForms();
+  bindTransportDynamicActions();
   bindStayGalleryGrid();
   bindStayBookAction();
 }
