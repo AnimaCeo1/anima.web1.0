@@ -59,6 +59,16 @@ window.ANIMA_DATA = {
       image: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=900&q=82",
       tags: ["Transport", "Verified", "Manager Support"],
     },
+    {
+      slug: "romeo-juliet",
+      name: "Romeo & Juliet",
+      category: "Hotel",
+      description: "Test partner profile for the ANIMA partner directory.",
+      location: "Dalat",
+      rating: "5.0",
+      image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=82",
+      tags: ["Test Partner", "Stay", "Dalat"],
+    },
   ],
   places: [
     {

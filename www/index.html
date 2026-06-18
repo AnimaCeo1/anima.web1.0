@@ -24,7 +24,7 @@
       })();
     </script>
     <link rel="preload" href="./assets/launch-splash.png?v=2026-06-19-gold-black" as="image" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-19-nav-stay" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-19-audit-mvp-1" />
   </head>
   <body>
     <section class="auth-entry" hidden></section>
@@ -123,6 +123,26 @@
       </section>
 
       <section class="content" aria-label="ANIMA shortcuts and recommendations">
+        <section class="home-need-section" aria-labelledby="home-need-title">
+          <div class="section-heading compact">
+            <h2 id="home-need-title" data-i18n="home.needToday">What do you need today?</h2>
+          </div>
+          <div class="home-need-chips">
+            <button class="home-need-chip" type="button" data-screen="stay">
+              <span data-i18n="home.needStay">Find stay</span>
+            </button>
+            <button class="home-need-chip" type="button" data-screen="eat">
+              <span data-i18n="home.needFood">Eat &amp; drink</span>
+            </button>
+            <button class="home-need-chip" type="button" data-screen="transport">
+              <span data-i18n="home.needRide">Get around</span>
+            </button>
+            <button class="home-need-chip" type="button" data-screen="services">
+              <span data-i18n="home.needHelp">Local help</span>
+            </button>
+          </div>
+        </section>
+
         <div class="section-heading home-main-heading">
           <h2 data-i18n="home.mainSections">Main Sections</h2>
         </div>
@@ -329,12 +349,11 @@
           <span class="hub-logo" aria-hidden="true">A</span>
           <span class="visually-hidden">ANIMA Hub</span>
         </button>
-        <a href="#" data-screen="store">
+        <a href="#" data-screen="saved">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 8h12l-1 12H7L6 8Z" />
-            <path d="M9 8a3 3 0 0 1 6 0" />
+            <path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
-          <span>Store</span>
+          <span data-i18n="common.saved">Saved</span>
         </a>
         <a href="#" data-screen="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -345,9 +364,9 @@
         </a>
       </nav>
     </main>
-    <script defer src="./mock-data.js?v=2026-06-19-audit"></script>
+    <script defer src="./mock-data.js?v=2026-06-19-audit-mvp-1"></script>
     <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
     <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
-    <script defer src="./script.js?v=2026-06-19-nav-stay"></script>
+    <script defer src="./script.js?v=2026-06-19-audit-mvp-1"></script>
   </body>
 </html>
