@@ -24,7 +24,7 @@
       })();
     </script>
     <link rel="preload" href="./assets/launch-splash.png?v=2026-06-19-gold-black" as="image" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-19-audit-mvp-1" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-19-hub-ecosystem-1" />
   </head>
   <body>
     <section class="auth-entry" hidden></section>
@@ -123,26 +123,6 @@
       </section>
 
       <section class="content" aria-label="ANIMA shortcuts and recommendations">
-        <section class="home-need-section" aria-labelledby="home-need-title">
-          <div class="section-heading compact">
-            <h2 id="home-need-title" data-i18n="home.needToday">What do you need today?</h2>
-          </div>
-          <div class="home-need-chips">
-            <button class="home-need-chip" type="button" data-screen="stay">
-              <span data-i18n="home.needStay">Find stay</span>
-            </button>
-            <button class="home-need-chip" type="button" data-screen="eat">
-              <span data-i18n="home.needFood">Eat &amp; drink</span>
-            </button>
-            <button class="home-need-chip" type="button" data-screen="transport">
-              <span data-i18n="home.needRide">Get around</span>
-            </button>
-            <button class="home-need-chip" type="button" data-screen="services">
-              <span data-i18n="home.needHelp">Local help</span>
-            </button>
-          </div>
-        </section>
-
         <div class="section-heading home-main-heading">
           <h2 data-i18n="home.mainSections">Main Sections</h2>
         </div>
@@ -286,19 +266,28 @@
       <section class="screen-view" aria-live="polite" hidden></section>
 
       <nav class="utility-nav" id="anima-hub" aria-label="ANIMA Hub tools" aria-hidden="true">
-        <a href="#" data-screen="explore">
+        <div class="hub-panel-head" aria-hidden="true">
+          <div>
+            <span>ANIMA Hub</span>
+            <strong>Ecosystem tools</strong>
+          </div>
+          <small>Dalat in one touch</small>
+        </div>
+        <a class="hub-tool primary" href="#" data-screen="explore">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m14 10-4 4"/><path d="m10 10 4 4"/></svg>
           <span>Explore</span>
+          <small>Places</small>
         </a>
-        <a href="#" data-screen="map">
+        <a class="hub-tool primary" href="#" data-screen="map">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" />
             <path d="M9 3v15" />
             <path d="M15 6v15" />
           </svg>
           <span>Map</span>
+          <small>Nearby</small>
         </a>
-        <a href="#" data-hub-scan>
+        <a class="hub-tool primary scan" href="#" data-hub-scan>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="5" y="5" width="14" height="14" rx="2" />
             <path d="M9 9h.01" />
@@ -308,16 +297,19 @@
             <path d="M12 12h.01" />
           </svg>
           <span>Scan QR</span>
+          <small>Rewards</small>
         </a>
-        <a href="#" data-screen="exchange">
+        <a class="hub-tool" href="#" data-screen="exchange">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11"/><path d="m15 4 3 3-3 3"/><path d="M17 17H6"/><path d="m9 14-3 3 3 3"/></svg>
           <span>Exchange</span>
+          <small>Currency</small>
         </a>
-        <a href="#" data-screen="store">
+        <a class="hub-tool" href="#" data-screen="store">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
           <span>Store</span>
+          <small>Products</small>
         </a>
-        <a href="#" data-hub-support>
+        <a class="hub-tool" href="#" data-hub-support>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 14a8 8 0 0 1 16 0" />
             <path d="M4 14v3a2 2 0 0 0 2 2h1v-7H6a2 2 0 0 0-2 2Z" />
@@ -325,6 +317,7 @@
             <path d="M12 20h3" />
           </svg>
           <span>Support</span>
+          <small>Manager</small>
         </a>
       </nav>
 
@@ -364,9 +357,9 @@
         </a>
       </nav>
     </main>
-    <script defer src="./mock-data.js?v=2026-06-19-audit-mvp-1"></script>
+    <script defer src="./mock-data.js?v=2026-06-19-hub-ecosystem-1"></script>
     <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
     <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
-    <script defer src="./script.js?v=2026-06-19-audit-mvp-1"></script>
+    <script defer src="./script.js?v=2026-06-19-hub-ecosystem-1"></script>
   </body>
 </html>
