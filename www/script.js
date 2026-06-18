@@ -39,6 +39,7 @@ const stayFilters = { category: "Hotels" };
 let feedFilters = { tab: "Today" };
 const feedLikes = new Set(JSON.parse(safeStorageGet("anima.feed.likes", "[]") || "[]"));
 const rootScreens = new Set(["home", "explore", "feed", "store", "profile", "assistant"]);
+const ROOT_NAV_TABS = new Set(["home", "feed", "store", "profile"]);
 const userSettings = {
   language: safeStorageGet("anima.language", "English"),
   currency: safeStorageGet("anima.currency", data.user.currency || "VND"),
@@ -2634,6 +2635,39 @@ function refreshCurrentScreenFromAdmin() {
   perfRun(`applyI18n:${currentScreen}`, () => applyI18n(screenView));
 }
 
+function updateNavigationStack(screen, options = {}) {
+  if (options.preserveHistory || screen === currentScreen) return;
+
+  previousScreen = currentScreen;
+
+  if (screen === "home") {
+    navigationStack.splice(0, navigationStack.length, "home");
+    return;
+  }
+
+  if (ROOT_NAV_TABS.has(screen)) {
+    navigationStack.splice(0, navigationStack.length, screen);
+    return;
+  }
+
+  if (screen === "ecosystem" && ROOT_NAV_TABS.has(currentScreen)) {
+    navigationStack.splice(0, navigationStack.length, currentScreen, "ecosystem");
+    return;
+  }
+
+  navigationStack.push(screen);
+}
+
+function normalizeNavigationStack(screen) {
+  if (screen === "home") {
+    navigationStack.splice(0, navigationStack.length, "home");
+    return;
+  }
+  if (ROOT_NAV_TABS.has(screen) && navigationStack[navigationStack.length - 1] === screen) {
+    navigationStack.splice(0, navigationStack.length, screen);
+  }
+}
+
 function navigateTo(screen, options = {}) {
   syncAdminContent();
   if (screen === "community") {
@@ -2641,10 +2675,7 @@ function navigateTo(screen, options = {}) {
     options.feedTab = options.feedTab || "Forum";
   }
   if (options.feedTab) feedFilters.tab = options.feedTab;
-  if (!options.preserveHistory && screen !== currentScreen) {
-    previousScreen = currentScreen;
-    navigationStack.push(screen);
-  }
+  updateNavigationStack(screen, options);
   currentScreen = screen;
   closeHub();
   updateBottomNav(screen);
@@ -2655,7 +2686,7 @@ function navigateTo(screen, options = {}) {
     homeContent.hidden = false;
     screenView.hidden = true;
     screenView.innerHTML = "";
-    if (!options.preserveHistory) navigationStack.splice(0, navigationStack.length, "home");
+    normalizeNavigationStack("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
@@ -2679,6 +2710,7 @@ function goBack() {
   if (navigationStack.length > 1) navigationStack.pop();
   const target = navigationStack[navigationStack.length - 1] || previousScreen || "home";
   navigateTo(target, { preserveHistory: true });
+  normalizeNavigationStack(target);
 }
 
 function updateBottomNav(screen) {
@@ -4248,7 +4280,7 @@ function renderEcosystem(config) {
       tags: ru
         ? ["Сайты", "CRM", "Автоматизация", "Маркетинг"]
         : ["Websites", "CRM", "Automation", "Marketing"],
-      screen: "digital-solutions",
+      screen: "tech-solutions",
       icon: "digital",
     },
     {
@@ -4329,12 +4361,6 @@ function renderExplore(config) {
     ["Services", ru ? "Локальная помощь и сервисы" : "Local help and services", "services"],
     ["ANIMA Store", ru ? "Кофе, мёд, подарки и мерч" : "Coffee, honey, gifts and merch", "store"],
   ];
-  const ecosystem = [
-    ["Jobs", ru ? "Работа и отклики" : "Jobs and applications", "jobs"],
-    ["Community", ru ? "Локальные события и люди" : "Local events and people", "community"],
-    ["For Business", ru ? "Партнёрство и продвижение" : "Partnership and promotion", "for-business"],
-    ["Digital Solutions", ru ? "Сайты, CRM и автоматизация" : "Websites, CRM and automation", "tech-solutions"],
-  ];
   const card = ([title, text, screen]) => `
     <button class="explore-card" type="button" data-screen="${screen}">
       <span>${title}</span>
@@ -4354,8 +4380,11 @@ function renderExplore(config) {
         <div class="explore-grid">${mainSections.map(card).join("")}</div>
       </section>
       <section class="screen-section">
-        <div class="section-heading compact"><h2>ANIMA Ecosystem</h2></div>
-        <div class="explore-grid ecosystem">${ecosystem.map(card).join("")}</div>
+        <div class="section-heading compact"><h2>${ru ? "Экосистема ANIMA" : "ANIMA Ecosystem"}</h2></div>
+        <button class="explore-card explore-card-wide" type="button" data-screen="ecosystem">
+          <span>${ru ? "Открыть портал экосистемы" : "Open ecosystem portal"}</span>
+          <p>${ru ? "Маркетплейс, награды, возможности и о платформе" : "Marketplace, rewards, opportunities and about"}</p>
+        </button>
       </section>
     </div>
   `;

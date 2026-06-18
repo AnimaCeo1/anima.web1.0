@@ -24,7 +24,7 @@
       })();
     </script>
     <link rel="preload" href="./assets/launch-splash.png?v=2026-06-19-gold-black" as="image" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-19-home-partners" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-19-audit" />
   </head>
   <body>
     <section class="auth-entry" hidden></section>
@@ -243,33 +243,21 @@
         </section>
 
         <section class="brand-footer home-brand-footer" aria-labelledby="home-partners-title">
-          <div class="brand-footer-head">
-            <div>
-              <h2 id="home-partners-title" data-i18n="home.partners">Our Partners</h2>
-              <p data-i18n="home.partnersSubtitle">Local places powering the ΛNIMΛ Dalat ecosystem.</p>
-            </div>
-            <div class="social-block">
-              <h2 data-i18n="home.social">Connect With Us</h2>
-              <div class="social-links">
-                <a href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener" aria-label="Instagram">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
-                </a>
-                <a href="https://t.me/sheffshady" target="_blank" rel="noopener" aria-label="Telegram">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.2 4.4 18 19.5c-.2 1-.8 1.3-1.7.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.3L5.6 13 1 11.6c-1-.3-1-1 .2-1.5L19.3 3c.9-.3 1.6.2 1.9 1.4Z" fill="currentColor" stroke="none"/></svg>
-                </a>
-              </div>
+          <div class="brand-footer-row">
+            <a class="brand-footer-partners-label" href="#" data-screen="partners" id="home-partners-title">
+              <span data-i18n="home.partners">Our Partners</span>
+              <span class="brand-footer-partners-arrow" aria-hidden="true">→</span>
+            </a>
+            <div class="social-links" aria-label="Social">
+              <a href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+              </a>
+              <a href="https://t.me/sheffshady" target="_blank" rel="noopener" aria-label="Telegram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.2 4.4 18 19.5c-.2 1-.8 1.3-1.7.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.3L5.6 13 1 11.6c-1-.3-1-1 .2-1.5L19.3 3c.9-.3 1.6.2 1.9 1.4Z" fill="currentColor" stroke="none"/></svg>
+              </a>
             </div>
           </div>
-          <a class="home-partners-cta" href="#" data-screen="partners">
-            <span class="home-partners-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M6 21V7l6-4 6 4v14"/><path d="M9 21v-6h6v6"/></svg>
-            </span>
-            <span class="home-partners-copy">
-              <strong data-i18n="home.partners">Our Partners</strong>
-              <small data-i18n="home.partnersSeeAll">Browse cafes, hotels, transport and more</small>
-            </span>
-            <span class="home-partners-arrow" aria-hidden="true">→</span>
-          </a>
+          <p class="brand-footer-subtitle" data-i18n="home.partnersSubtitle">Local places powering the ΛNIMΛ Dalat ecosystem.</p>
           <div class="partner-mini-grid" data-home-partners-grid aria-label="Partner highlights"></div>
         </section>
 
@@ -357,9 +345,9 @@
         </a>
       </nav>
     </main>
-    <script defer src="./mock-data.js?v=2026-06-19-home-partners"></script>
+    <script defer src="./mock-data.js?v=2026-06-19-audit"></script>
     <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
     <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
-    <script defer src="./script.js?v=2026-06-19-home-partners"></script>
+    <script defer src="./script.js?v=2026-06-19-audit"></script>
   </body>
 </html>
