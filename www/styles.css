@@ -3048,29 +3048,38 @@ body.search-suggestions-open .content {
   padding-bottom: calc(var(--nav-height) + var(--nav-bottom) + 34px);
 }
 
+.ecosystem-lead {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .ecosystem-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .ecosystem-card {
   position: relative;
-  min-height: 132px;
-  padding: 14px 14px 42px;
-  border: 1px solid rgba(247, 231, 200, 0.12);
-  border-radius: 18px;
+  min-height: 148px;
+  padding: 16px 16px 44px;
+  border: 1px solid rgba(126, 229, 139, 0.14);
+  border-radius: 20px;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 10px 12px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px 14px;
   align-content: start;
   text-align: left;
   color: var(--text);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(7, 28, 25, 0.68);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    radial-gradient(circle at 88% 12%, rgba(126, 229, 139, 0.1), transparent 42%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(7, 28, 25, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 40px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
 }
 
 .ecosystem-card:active {
@@ -3079,23 +3088,23 @@ body.search-suggestions-open .content {
 
 .ecosystem-card-wide {
   grid-column: 1 / -1;
-  min-height: 118px;
+  min-height: 128px;
 }
 
 .ecosystem-card-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   color: #d9c07a;
-  background: rgba(217, 192, 122, 0.1);
-  border: 1px solid rgba(217, 192, 122, 0.18);
+  background: rgba(217, 192, 122, 0.12);
+  border: 1px solid rgba(217, 192, 122, 0.2);
 }
 
 .ecosystem-card-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
@@ -3105,15 +3114,22 @@ body.search-suggestions-open .content {
 
 .ecosystem-card-copy {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
 }
 
 .ecosystem-card-copy strong {
   color: var(--cream);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 850;
-  line-height: 1.2;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+}
+
+.ecosystem-card-desc {
+  color: rgba(214, 232, 220, 0.72);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .ecosystem-tags {
@@ -3126,17 +3142,182 @@ body.search-suggestions-open .content {
   font-style: normal;
   font-size: 10px;
   line-height: 1.2;
-  padding: 4px 7px;
+  padding: 4px 8px;
   border-radius: 999px;
-  color: rgba(126, 229, 139, 0.92);
-  background: rgba(126, 229, 139, 0.08);
-  border: 1px solid rgba(126, 229, 139, 0.14);
+  color: rgba(126, 229, 139, 0.94);
+  background: rgba(126, 229, 139, 0.09);
+  border: 1px solid rgba(126, 229, 139, 0.16);
 }
 
 .ecosystem-card .round-arrow {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: 14px;
+  bottom: 14px;
+}
+
+.about-platform-screen {
+  gap: 14px;
+  padding-bottom: calc(var(--nav-height) + var(--nav-bottom) + 34px);
+}
+
+.about-platform-hero {
+  display: grid;
+  gap: 12px;
+  overflow: hidden;
+  padding: 22px 18px;
+  border: 1px solid rgba(126, 229, 139, 0.16);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 84% 14%, rgba(232, 181, 102, 0.14), transparent 9rem),
+    radial-gradient(circle at 12% 10%, rgba(114, 211, 136, 0.14), transparent 9rem),
+    var(--glass-soft);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px);
+}
+
+.about-platform-hero h2 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.about-platform-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.about-platform-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(126, 229, 139, 0.92);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.about-platform-block,
+.about-platform-pillars,
+.about-platform-audiences,
+.about-platform-partners {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--glass);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.about-platform-block h3,
+.about-platform-section-head h3,
+.about-platform-partners h3,
+.about-platform-cta h3 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--cream);
+}
+
+.about-platform-block p,
+.about-platform-partners p,
+.about-platform-pillar-grid p,
+.about-platform-audience-list p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.48;
+}
+
+.about-platform-mission {
+  border-color: rgba(232, 181, 102, 0.22);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(232, 181, 102, 0.1), transparent 8rem),
+    var(--glass);
+}
+
+.about-platform-section-head {
+  display: grid;
+  gap: 4px;
+}
+
+.about-platform-pillar-grid,
+.about-platform-audience-list {
+  display: grid;
+  gap: 10px;
+}
+
+.about-platform-pillar-grid article,
+.about-platform-audience-list article {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.about-platform-index {
+  color: var(--gold-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.about-platform-pillar-grid h4,
+.about-platform-audience-list h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--cream);
+}
+
+.about-platform-partners {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.about-platform-cta {
+  display: grid;
+  gap: 12px;
+  padding: 20px 18px;
+  border: 1px solid rgba(232, 181, 102, 0.24);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 14% 8%, rgba(232, 181, 102, 0.12), transparent 8rem),
+    radial-gradient(circle at 88% 88%, rgba(114, 211, 136, 0.1), transparent 8rem),
+    var(--glass-soft);
+}
+
+.about-platform-cta p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.about-platform-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .ecosystem-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ecosystem-card-wide {
+    grid-column: auto;
+  }
+
+  .about-platform-partners {
+    grid-template-columns: 1fr;
+  }
 }
 
 .marketplace-screen {

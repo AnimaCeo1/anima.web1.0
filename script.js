@@ -1143,7 +1143,7 @@ function renderHomePartners() {
   grid.querySelectorAll("[data-screen]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      navigateTo(item.dataset.screen);
+      navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
     });
   });
 }
@@ -4228,6 +4228,28 @@ function renderEcosystem(config) {
       screen: "feed",
       feedTab: "Classifieds",
       icon: "marketplace",
+    },
+    {
+      title: ru ? "Цифровые решения" : "Digital Solutions",
+      desc: ru
+        ? "Сайты, веб-приложения, CRM и автоматизация"
+        : "Websites, web apps, CRM and automation",
+      tags: ru
+        ? ["Сайты", "CRM", "Автоматизация", "Маркетинг"]
+        : ["Websites", "CRM", "Automation", "Marketing"],
+      screen: "digital-solutions",
+      icon: "digital",
+    },
+    {
+      title: ru ? "Возможности" : "Opportunities",
+      desc: ru
+        ? "Работа, фриланс, инвестиции и партнёрства"
+        : "Jobs, freelance, investments and partnerships",
+      tags: ru
+        ? ["Работа", "Фриланс", "Инвестиции", "Партнёрства"]
+        : ["Jobs", "Freelance", "Investments", "Partnerships"],
+      screen: "jobs",
+      icon: "opportunities",
     },
     {
       title: ru ? "Награды" : "Rewards",

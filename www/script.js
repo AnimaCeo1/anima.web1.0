@@ -1143,7 +1143,7 @@ function renderHomePartners() {
   grid.querySelectorAll("[data-screen]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      navigateTo(item.dataset.screen);
+      navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
     });
   });
 }
@@ -2246,7 +2246,7 @@ const screenConfig = {
   },
   ecosystem: {
     title: "ANIMA Ecosystem",
-    subtitle: "Digital ecosystem for opportunities, business and community",
+    subtitle: "Marketplace, rewards and the ANIMA platform hub",
     search: "",
     chips: [],
   },
@@ -2326,7 +2326,7 @@ const dataMap = {
 document.querySelectorAll("[data-screen]").forEach((item) => {
   item.addEventListener("click", (event) => {
     event.preventDefault();
-    navigateTo(item.dataset.screen);
+    navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
   });
 });
 
@@ -2634,6 +2634,7 @@ function refreshCurrentScreenFromAdmin() {
 
 function navigateTo(screen, options = {}) {
   syncAdminContent();
+  if (options.feedTab) feedFilters.tab = options.feedTab;
   if (!options.preserveHistory && screen !== currentScreen) {
     previousScreen = currentScreen;
     navigationStack.push(screen);
@@ -4217,39 +4218,22 @@ function renderEcosystem(config) {
   const ru = isRussianLanguage();
   const cards = [
     {
-      title: ru ? "Возможности" : "Opportunities",
+      title: ru ? "Маркетплейс" : "Marketplace",
+      desc: ru
+        ? "Партнёрства, инвестиции и объявления в ленте"
+        : "Partnerships, investments and classifieds in Feed",
       tags: ru
-        ? ["Работа", "Фриланс", "Бизнес", "Инвестиции", "Партнёрства"]
-        : ["Jobs", "Freelance", "Business Opportunities", "Investments", "Partnerships"],
-      screen: "jobs",
-      icon: "opportunities",
-    },
-    {
-      title: ru ? "Сообщество" : "Community",
-      tags: ru
-        ? ["Сообщество", "Нетворкинг", "События", "Группы", "Digital Nomads"]
-        : ["Community", "Networking", "Events", "Interest Groups", "Digital Nomads"],
-      screen: "community",
-      icon: "community",
-    },
-    {
-      title: ru ? "Для бизнеса" : "For Business",
-      tags: ru
-        ? ["Стать партнёром", "Partner Dashboard", "CRM", "Аналитика", "Листинги"]
-        : ["Become a Partner", "Partner Dashboard", "CRM Tools", "Analytics", "Business Listings"],
-      screen: "for-business",
-      icon: "business",
-    },
-    {
-      title: ru ? "Цифровые решения" : "Digital Solutions for Business",
-      tags: ru
-        ? ["Сайты", "Web Apps", "CRM", "AI-автоматизация", "Маркетинг", "Digitalization"]
-        : ["Websites", "Web Apps", "CRM Systems", "AI Automation", "Digital Marketing", "Business Digitalization"],
-      screen: "digital-solutions",
-      icon: "digital",
+        ? ["Объявления", "Партнёрства", "Инвестиции", "Недвижимость"]
+        : ["Classifieds", "Partnerships", "Investments", "Real Estate"],
+      screen: "feed",
+      feedTab: "Classifieds",
+      icon: "marketplace",
     },
     {
       title: ru ? "Награды" : "Rewards",
+      desc: ru
+        ? "ANIMA Points, бонусы и премиум-предложения"
+        : "ANIMA Points, bonuses and premium offers",
       tags: ru
         ? ["ANIMA Points", "Бонусы", "Premium", "Спецпредложения"]
         : ["ANIMA Points", "Bonuses", "Premium", "Special Offers"],
@@ -4257,15 +4241,10 @@ function renderEcosystem(config) {
       icon: "rewards",
     },
     {
-      title: ru ? "Маркетплейс" : "Marketplace",
-      tags: ru
-        ? ["Недвижимость", "Товары", "Услуги", "Локальные продукты"]
-        : ["Real Estate", "Products", "Services", "Local Goods"],
-      screen: "marketplace",
-      icon: "marketplace",
-    },
-    {
       title: ru ? "О платформе ANIMA" : "About ANIMA",
+      desc: ru
+        ? "Миссия, идея, партнёры и развитие Далата"
+        : "Mission, idea, partners and developing Dalat",
       tags: ru
         ? ["Миссия", "Develop Dalat", "Партнёры", "Контакты"]
         : ["Mission", "Develop Dalat", "Partners", "Contact Us"],
@@ -4275,19 +4254,16 @@ function renderEcosystem(config) {
     },
   ];
   const icons = {
-    opportunities: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
-    community: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><circle cx="17" cy="9" r="3"/><path d="M17 15a5 5 0 0 1 5 5"/></svg>`,
-    business: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 3 3a3 3 0 0 0 4.2 0L22 8.2 18.8 5 12 11.8"/><path d="m16 12-4-4-6 6a3 3 0 0 0 4.2 4.2l1.8-1.8"/></svg>`,
-    digital: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="m10 13-2 2 2 2"/><path d="m14 13 2 2-2 2"/></svg>`,
     rewards: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
     marketplace: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
     about: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/></svg>`,
   };
   const card = (item) => `
-    <button class="ecosystem-card ${item.wide ? "ecosystem-card-wide" : ""}" type="button" data-screen="${item.screen}">
+    <button class="ecosystem-card ${item.wide ? "ecosystem-card-wide" : ""}" type="button" data-screen="${item.screen}"${item.feedTab ? ` data-feed-tab="${item.feedTab}"` : ""}>
       <span class="ecosystem-card-icon">${icons[item.icon]}</span>
       <span class="ecosystem-card-copy">
         <strong>${item.title}</strong>
+        <span class="ecosystem-card-desc">${item.desc}</span>
         <span class="ecosystem-tags">${item.tags.map((tag) => `<em>${tag}</em>`).join("")}</span>
       </span>
       <span class="round-arrow" aria-hidden="true">→</span>
@@ -4296,6 +4272,9 @@ function renderEcosystem(config) {
   return `
     <div class="screen-inner ecosystem-screen">
       ${renderHeader(config, { back: true })}
+      <p class="ecosystem-lead">${ru
+        ? "Центральный портал платформы. Работа, бизнес, цифровые решения и сообщество — на главном экране и в ленте."
+        : "Central platform portal. Jobs, business, digital solutions and community live on Home and Feed."}</p>
       <section class="ecosystem-grid" aria-label="${ru ? "Разделы экосистемы ANIMA" : "ANIMA Ecosystem sections"}">
         ${cards.map(card).join("")}
       </section>
@@ -5675,38 +5654,122 @@ function renderAnimaPlusDetails(config) {
   `;
 }
 
-function renderAbout(config) {
-  const sections = [
-    ["What is ANIMA", "ANIMA is a modern lifestyle and travel ecosystem connecting Dalat's best places, services, experiences and community in one calm digital space."],
-    ["Our Mission", "We are building more than a location app: ANIMA is a digital layer for living, exploring, working, meeting people and discovering the local culture of Dalat."],
-    ["Community", "Travelers, locals, expats and digital nomads can save places, share experiences, discover events and become part of a living city network."],
-    ["For Travelers", "Find curated cafes, restaurants, stays, hidden gems, transport and premium experiences without losing the atmosphere of the city."],
-    ["For Digital Nomads", "Use ANIMA as a soft entry point into work-friendly cafes, long stays, services, community meetups and local opportunities."],
-    ["For Businesses & Partners", "Partners can reach a high-intent audience, promote services, join QR rewards and grow through the ANIMA ecosystem."],
-    ["Ecosystem Vision", "ANIMA unites travel, lifestyle, community, local business, digital services and immersive city experience into one premium platform."],
-  ];
+function renderAboutPlatform(config) {
+  const ru = isRussianLanguage();
+  const pillars = ru
+    ? [
+        ["Explore", "Проживание, еда, природа, транспорт и сервисы — кураторский Далат."],
+        ["Feed", "Лента, события, форум, объявления и городская социальная активность."],
+        ["Business", "Партнёрство, листинги, CRM-инструменты и цифровые решения для бизнеса."],
+        ["Rewards", "ANIMA Points, бонусы, премиум и спецпредложения от партнёров."],
+      ]
+    : [
+        ["Explore", "Stay, food, nature, transport and services — curated Dalat."],
+        ["Feed", "Ribbon, events, forum, classifieds and city social activity."],
+        ["Business", "Partnership, listings, CRM tools and digital solutions for partners."],
+        ["Rewards", "ANIMA Points, bonuses, premium and special partner offers."],
+      ];
+  const audiences = ru
+    ? [
+        ["Для путешественников", "Кафе, рестораны, проживание, скрытые места и премиум-опыт без потери атмосферы города."],
+        ["Для digital nomads", "Рабочие кафе, долгие стейи, сервисы, встречи и локальные возможности в одном приложении."],
+        ["Для бизнеса", "Доступ к аудитории с намерением, QR-награды, продвижение и рост через экосистему ANIMA."],
+      ]
+    : [
+        ["For travelers", "Cafes, restaurants, stays, hidden gems and premium experiences without losing the city's atmosphere."],
+        ["For digital nomads", "Work-friendly cafes, long stays, services, meetups and local opportunities in one app."],
+        ["For business", "High-intent audience reach, QR rewards, promotion and growth through the ANIMA ecosystem."],
+      ];
   return `
-    <div class="screen-inner about-screen">
+    <div class="screen-inner about-platform-screen">
       ${renderHeader(config, { back: true })}
-      <section class="about-hero">
+
+      <section class="about-platform-hero">
         <p class="brand-kicker">ΛNIMΛ Dalat</p>
-        <h2>A city ecosystem inspired by nature, movement and digital lifestyle.</h2>
-        <p>Curated places. Local partners. Community energy. Premium tools for a deeper Dalat experience.</p>
+        <h2>${ru
+          ? "Цифровая экосистема города: природа, движение и современный lifestyle"
+          : "A city digital ecosystem of nature, movement and modern lifestyle"}</h2>
+        <p class="about-platform-lead">${ru
+          ? "ANIMA объединяет лучшие места, сервисы, опыт, бизнес и сообщество Далата в одном спокойном премиальном пространстве."
+          : "ANIMA connects Dalat's best places, services, experiences, business and community in one calm premium space."}</p>
       </section>
-      <section class="about-grid">
-        ${sections.map(([title, text]) => `<article><span>✦</span><h3>${title}</h3><p>${text}</p></article>`).join("")}
+
+      <section class="about-platform-block">
+        <span class="about-platform-kicker">${ru ? "Наша идея" : "Our idea"}</span>
+        <h3>${ru ? "Больше, чем travel-приложение" : "More than a travel app"}</h3>
+        <p>${ru
+          ? "Мы создаём цифровой слой для жизни, исследования, работы и знакомства с культурой Далата — от утреннего кофе до партнёрских инструментов и городской ленты."
+          : "We are building a digital layer for living, exploring, working and discovering Dalat's culture — from morning coffee to partner tools and the city feed."}</p>
       </section>
-      <section class="about-cta">
-        <h2>Build Dalat with ANIMA.</h2>
-        <p>Join the community, become a partner, or follow the platform as the ecosystem grows.</p>
+
+      <section class="about-platform-block about-platform-mission">
+        <span class="about-platform-kicker">${ru ? "Миссия" : "Mission"}</span>
+        <h3>Develop Dalat</h3>
+        <p>${ru
+          ? "Развивать город через локальных партнёров, осмысленный туризм, цифровизацию бизнеса и живое сообщество — чтобы Далат рос как экосистема, а не как набор разрозненных сервисов."
+          : "Grow the city through local partners, meaningful tourism, business digitalization and a living community — so Dalat evolves as an ecosystem, not scattered services."}</p>
+      </section>
+
+      <section class="about-platform-pillars">
+        <div class="about-platform-section-head">
+          <span class="about-platform-kicker">${ru ? "Платформа" : "Platform"}</span>
+          <h3>${ru ? "Четыре опоры ANIMA" : "Four pillars of ANIMA"}</h3>
+        </div>
+        <div class="about-platform-pillar-grid">
+          ${pillars.map(([title, text], index) => `
+            <article>
+              <span class="about-platform-index">0${index + 1}</span>
+              <h4>${title}</h4>
+              <p>${text}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="about-platform-audiences">
+        <div class="about-platform-section-head">
+          <span class="about-platform-kicker">${ru ? "Для кого" : "Who it's for"}</span>
+          <h3>${ru ? "Кому помогает ANIMA" : "Who ANIMA serves"}</h3>
+        </div>
+        <div class="about-platform-audience-list">
+          ${audiences.map(([title, text]) => `
+            <article>
+              <h4>${title}</h4>
+              <p>${text}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="about-platform-partners">
         <div>
-          <a class="gold-button" href="#" data-screen="for-business">Become a Partner</a>
-          <a class="mini-cta" href="#" data-screen="community">Join Community</a>
-          <a class="mini-cta" href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener">Follow ANIMA</a>
+          <span class="about-platform-kicker">${ru ? "Партнёры" : "Partners"}</span>
+          <h3>${ru ? "Локальные бренды экосистемы" : "Local brands powering the ecosystem"}</h3>
+          <p>${ru
+            ? "Кофейни, рестораны, отели, сервисы и креаторы Далата — вместе формируют премиальный опыт ANIMA."
+            : "Cafes, restaurants, hotels, services and creators in Dalat — together shaping the premium ANIMA experience."}</p>
+        </div>
+        <button class="mini-cta" type="button" data-screen="partners">${ru ? "Наши партнёры →" : "Our partners →"}</button>
+      </section>
+
+      <section class="about-platform-cta">
+        <h3>${ru ? "Стройте Далат вместе с ANIMA" : "Build Dalat with ANIMA"}</h3>
+        <p>${ru
+          ? "Станьте партнёром, следите за платформой или напишите команде — экосистема растёт вместе с городом."
+          : "Become a partner, follow the platform or reach the team — the ecosystem grows with the city."}</p>
+        <div class="about-platform-cta-actions">
+          <a class="gold-button" href="#" data-screen="for-business">${ru ? "Стать партнёром" : "Become a Partner"}</a>
+          <a class="mini-cta" href="#" data-screen="feed" data-feed-tab="Forum">${ru ? "Лента и сообщество" : "Feed & community"}</a>
+          <a class="mini-cta" href="#" data-screen="contact">${ru ? "Связаться" : "Contact Us"}</a>
+          <a class="mini-cta" href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener">Instagram</a>
         </div>
       </section>
     </div>
   `;
+}
+
+function renderAbout(config) {
+  return renderAboutPlatform(config);
 }
 
 function renderPartners(config) {
@@ -5880,7 +5943,7 @@ function bindScreenActions() {
   screenView.querySelectorAll("[data-screen]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      navigateTo(item.dataset.screen);
+      navigateTo(item.dataset.screen, { feedTab: item.dataset.feedTab });
     });
   });
   screenView.querySelectorAll(".filter-chips button").forEach((button) => {
