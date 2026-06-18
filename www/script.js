@@ -784,6 +784,8 @@ const phraseTranslations = {
   "Request currency exchange in Dalat.": "Оставьте заявку на обмен валюты в Далате.",
   "Explore routes, rewards and live city points.": "Исследуйте маршруты, бонусы и городские точки.",
   "Curated products from Dalat.": "Отобранные продукты из Далата.",
+  "Curated coffee, honey, eco goods and gifts from Dalat.": "Кофе, мёд, эко-товары и подарки из Далата.",
+  "Forum, posts and city social activity — open Feed.": "Форум, посты и городская активность — в ленте.",
   "The digital ecosystem of Dalat.": "Цифровая экосистема Далата.",
   "Digital ecosystem for opportunities, business and community": "Цифровая экосистема возможностей, бизнеса и сообщества",
   "Real estate, products, services and local goods.": "Недвижимость, товары, услуги и локальные продукты.",
@@ -2144,9 +2146,9 @@ const screenConfig = {
   },
   community: {
     title: "Community",
-    subtitle: "Connect. Share. Grow together in Dalat.",
-    search: "Search people, groups, posts, services...",
-    chips: ["For You", "Nearby", "Trending", "Digital Nomads", "Events", "Services", "Housing"],
+    subtitle: "Forum, posts and city social activity — open Feed.",
+    search: "Search posts, topics, people...",
+    chips: [],
   },
   stay: {
     title: "Stay",
@@ -2240,8 +2242,8 @@ const screenConfig = {
   },
   store: {
     title: "ANIMA Store",
-    subtitle: "Curated products from Dalat.",
-    search: "",
+    subtitle: "Curated coffee, honey, eco goods and gifts from Dalat.",
+    search: "Search products...",
     chips: [],
   },
   ecosystem: {
@@ -2634,6 +2636,10 @@ function refreshCurrentScreenFromAdmin() {
 
 function navigateTo(screen, options = {}) {
   syncAdminContent();
+  if (screen === "community") {
+    screen = "feed";
+    options.feedTab = options.feedTab || "Forum";
+  }
   if (options.feedTab) feedFilters.tab = options.feedTab;
   if (!options.preserveHistory && screen !== currentScreen) {
     previousScreen = currentScreen;
@@ -3387,9 +3393,14 @@ function renderScreen(screen) {
   if (screen === "feed") return renderFeed(config);
   if (screen === "saved") return renderSaved(config);
   if (screen === "bookings") return renderBookingsScreen(config);
-  if (screen === "jobs") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Вакансии и отклики появятся в ближайшем обновлении." : "Jobs and applications will appear in the next update." });
-  if (screen === "services") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Локальные сервисы скоро будут доступны." : "Local services will be available soon." });
-  if (screen === "community") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Комьюнити ANIMA готовится к запуску." : "ANIMA Community is preparing to launch." });
+  if (screen === "jobs") {
+    if (data.jobs?.length) return renderJobs(config);
+    return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Вакансии и отклики появятся в ближайшем обновлении." : "Jobs and applications will appear in the next update." });
+  }
+  if (screen === "services") {
+    if (data.services?.length) return renderServices(config);
+    return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Локальные сервисы скоро будут доступны." : "Local services will be available soon." });
+  }
   if (screen === "stay") return renderStay(config);
   if (screen === "eat") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Кафе и рестораны появятся в следующем релизе." : "Cafes and restaurants are coming in the next release." });
   if (screen === "experiences") {
@@ -4230,6 +4241,28 @@ function renderEcosystem(config) {
       icon: "marketplace",
     },
     {
+      title: ru ? "Цифровые решения" : "Digital Solutions",
+      desc: ru
+        ? "Сайты, веб-приложения, CRM и автоматизация"
+        : "Websites, web apps, CRM and automation",
+      tags: ru
+        ? ["Сайты", "CRM", "Автоматизация", "Маркетинг"]
+        : ["Websites", "CRM", "Automation", "Marketing"],
+      screen: "digital-solutions",
+      icon: "digital",
+    },
+    {
+      title: ru ? "Возможности" : "Opportunities",
+      desc: ru
+        ? "Работа, фриланс, инвестиции и партнёрства"
+        : "Jobs, freelance, investments and partnerships",
+      tags: ru
+        ? ["Работа", "Фриланс", "Инвестиции", "Партнёрства"]
+        : ["Jobs", "Freelance", "Investments", "Partnerships"],
+      screen: "jobs",
+      icon: "opportunities",
+    },
+    {
       title: ru ? "Награды" : "Rewards",
       desc: ru
         ? "ANIMA Points, бонусы и премиум-предложения"
@@ -4256,6 +4289,8 @@ function renderEcosystem(config) {
   const icons = {
     rewards: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
     marketplace: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
+    digital: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="m10 13-2 2 2 2"/><path d="m14 13 2 2-2 2"/></svg>`,
+    opportunities: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
     about: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/></svg>`,
   };
   const card = (item) => `
@@ -4273,8 +4308,8 @@ function renderEcosystem(config) {
     <div class="screen-inner ecosystem-screen">
       ${renderHeader(config, { back: true })}
       <p class="ecosystem-lead">${ru
-        ? "Центральный портал платформы. Работа, бизнес, цифровые решения и сообщество — на главном экране и в ленте."
-        : "Central platform portal. Jobs, business, digital solutions and community live on Home and Feed."}</p>
+        ? "Центральный портал платформы. Сообщество и события — в ленте; быстрые карточки Jobs и For Business — на главном."
+        : "Central platform portal. Community and events live in Feed; Jobs and For Business quick cards stay on Home."}</p>
       <section class="ecosystem-grid" aria-label="${ru ? "Разделы экосистемы ANIMA" : "ANIMA Ecosystem sections"}">
         ${cards.map(card).join("")}
       </section>
