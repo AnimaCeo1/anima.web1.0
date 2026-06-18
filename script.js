@@ -808,13 +808,9 @@ const phraseTranslations = {
   Photography: "Фото",
   Wellness: "Велнес",
   Premium: "Премиум",
+  Bike: "Байк",
   Moto: "Мото",
-  "Bike / E-bike": "Байк / электробайк",
-  Bicycle: "Велосипед",
-  Car: "Авто",
-  "Personal Driver": "Личный водитель",
-  Transfer: "Трансфер",
-  Bus: "Автобус",
+  Auto: "Авто",
   Places: "Места",
   Offers: "Предложения",
   Remote: "Удалённо",
@@ -2133,8 +2129,8 @@ const screenConfig = {
   transport: {
     title: "Transport",
     subtitle: "Find the best way to move around Da Lat.",
-    search: "Search bikes, taxis, transfers...",
-    chips: ["Moto", "Bike / E-bike", "Bicycle", "Car", "Personal Driver", "Transfer", "Bus"],
+    search: "Search bikes, motos and cars...",
+    chips: ["Bike", "Moto", "Auto"],
   },
   saved: {
     title: "Saved",
@@ -4298,14 +4294,15 @@ function renderExchange(config) {
   `;
 }
 
-function renderTransport(config, activeCategory = "Moto") {
+function renderTransport(config, activeCategory = "Bike") {
+  const chips = screenConfig.transport.chips;
   return `
     <div class="screen-inner transport-screen">
       ${renderHeader(config, { back: true })}
       <div class="transport-tabs" aria-label="Transport categories">
-        ${config.chips.map((chip) => `
+        ${chips.map((chip) => `
           <button class="${chip === activeCategory ? "active" : ""}" type="button" data-transport-category="${chip}">
-            <span>${chip}</span>
+            <span>${translatePhrase(chip)}</span>
           </button>
         `).join("")}
       </div>
@@ -4325,13 +4322,10 @@ function renderTransport(config, activeCategory = "Moto") {
 }
 
 function renderTransportContent(category) {
-  if (["Moto", "Bike / E-bike", "Bicycle", "Car"].includes(category)) {
+  if (["Bike", "Moto", "Auto"].includes(category)) {
     const rentals = data.transport.rentals.filter((item) => item.group === category);
     return `<div class="transport-list">${rentals.map(transportRentalCard).join("")}</div>`;
   }
-  if (category === "Personal Driver") return renderPersonalDriver();
-  if (category === "Transfer") return renderTransfer();
-  if (category === "Bus") return renderBusSchedule();
   return "";
 }
 
