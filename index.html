@@ -23,23 +23,21 @@
         window.addEventListener("load", () => mark("index.html:window.load"), { once: true });
       })();
     </script>
-    <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="stylesheet" href="./styles.css?v=2026-06-18-cinematic-auth-1" />
+    <link rel="preload" href="./assets/launch-splash.png?v=2026-06-19-gold-black" as="image" />
+    <link rel="stylesheet" href="./styles.css?v=2026-06-19-stay-gallery-fix" />
   </head>
   <body>
-    <section class="launch-screen" aria-label="ANIMA opening animation" data-launch-screen>
-      <div class="launch-screen-core">
-        <div class="launch-screen-orbit launch-screen-orbit-left" aria-hidden="true"></div>
-        <div class="launch-screen-orbit launch-screen-orbit-right" aria-hidden="true"></div>
-        <div class="launch-screen-flare" aria-hidden="true"></div>
-        <div class="launch-screen-mark">
-          <img src="./assets/anima-wordmark.png" alt="ANIMA" />
-        </div>
-        <p class="launch-screen-kicker">Весь мир - в одном приложении</p>
-      </div>
-    </section>
     <section class="auth-entry" hidden></section>
     <main class="phone-shell" aria-label="ANIMA city companion">
+      <section class="launch-screen" aria-label="ANIMA" data-launch-screen>
+        <img class="launch-screen-art" src="./assets/launch-splash.png?v=2026-06-19-gold-black" alt="" aria-hidden="true" decoding="sync" fetchpriority="high" />
+      </section>
+      <div class="language-menu" id="language-menu" hidden role="menu" aria-label="Choose language">
+        <button type="button" data-lang="English"><span data-i18n="profile.english">English</span> <span>EN</span></button>
+        <button type="button" data-lang="Russian"><span data-i18n="profile.russian">Russian</span> <span>RU</span></button>
+        <button type="button" data-lang="Vietnamese"><span data-i18n="profile.vietnamese">Tiếng Việt</span> <span>VN</span></button>
+      </div>
+      <div class="search-suggestions" id="search-suggestions" data-search-suggestions hidden></div>
       <section class="hero">
         <div class="hero-bg hero-bg-base"></div>
         <div class="hero-bg hero-bg-overlay" aria-hidden="true"></div>
@@ -57,11 +55,6 @@
               </svg>
               <span>EN</span>
             </button>
-            <div class="language-menu" hidden>
-              <button type="button" data-lang="English"><span data-i18n="profile.english">English</span> <span>EN</span></button>
-              <button type="button" data-lang="Russian"><span data-i18n="profile.russian">Russian</span> <span>RU</span></button>
-              <button type="button" data-lang="Vietnamese" disabled><span>Tiếng Việt</span> <span>VN · soon</span></button>
-            </div>
             <button class="icon-button" type="button" aria-label="Notifications">
               <span class="notify-dot" aria-hidden="true"></span>
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -126,7 +119,6 @@
               </svg>
             </button>
           </form>
-          <div class="search-suggestions" id="search-suggestions" data-search-suggestions></div>
         </div>
       </section>
 
@@ -134,24 +126,13 @@
         <div class="section-heading home-main-heading">
           <h2 data-i18n="home.mainSections">Main Sections</h2>
         </div>
-        <nav class="category-row core-services" aria-label="Core Dalat services">
-          <button class="category-card active" type="button" data-screen="exchange">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 7h11" />
-              <path d="m15 4 3 3-3 3" />
-              <path d="M17 17H6" />
-              <path d="m9 14-3 3 3 3" />
-            </svg>
-            <span>Exchange</span>
-          </button>
+        <nav class="category-row core-services home-categories-grid" aria-label="Core Dalat services">
           <button class="category-card" type="button" data-screen="stay">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 11V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
               <path d="M5 11h14a2 2 0 0 1 2 2v5H3v-5a2 2 0 0 1 2-2Z" />
               <path d="M7 18v2" />
               <path d="M17 18v2" />
-              <path d="M8 9h2" />
-              <path d="M14 9h2" />
             </svg>
             <span>Stay</span>
           </button>
@@ -159,9 +140,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 9h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z" />
               <path d="M18 11h1a3 3 0 0 1 0 6h-1" />
-              <path d="M8 5v2" />
-              <path d="M12 4v3" />
-              <path d="M16 5v2" />
             </svg>
             <span>Eat &amp; Drink</span>
           </button>
@@ -171,9 +149,8 @@
               <path d="M8 2v4" />
               <path d="M16 2v4" />
               <path d="M8 10h8" />
-              <path d="M8 14h5" />
             </svg>
-            <span>Events</span>
+            <span>Tours</span>
           </button>
           <button class="category-card" type="button" data-screen="transport">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -181,221 +158,110 @@
               <path d="M5 15h14v3H5z" />
               <circle cx="8" cy="18" r="1.5" />
               <circle cx="16" cy="18" r="1.5" />
-              <path d="M8 9h8" />
             </svg>
             <span>Transport</span>
           </button>
+          <button class="category-card" type="button" data-screen="exchange">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 7h11" />
+              <path d="m15 4 3 3-3 3" />
+              <path d="M17 17H6" />
+              <path d="m9 14-3 3 3 3" />
+            </svg>
+            <span>Exchange</span>
+          </button>
+          <button class="category-card" type="button" data-screen="services">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="8" r="4" />
+              <path d="M2 21a7 7 0 0 1 14 0" />
+              <path d="M17 11l2 2 4-5" />
+            </svg>
+            <span>Services</span>
+          </button>
         </nav>
 
-        <section class="home-rewards-card" aria-labelledby="home-rewards-title">
-          <div class="home-rewards-coin" aria-hidden="true">
-            <img src="./assets/anima-points-coin.png" alt="" />
-          </div>
+        <button class="home-rewards-card home-rewards-card-compact" type="button" data-anima-points-guide aria-labelledby="home-rewards-title">
           <div class="home-rewards-copy">
-            <h2 id="home-rewards-title">You earn with ANIMA <span aria-hidden="true">✦</span></h2>
-            <p>Use ANIMA Points and get amazing rewards.</p>
-            <button class="cream-button" type="button" data-screen="rewards"><span>View rewards</span><span aria-hidden="true">→</span></button>
+            <h2 id="home-rewards-title" data-i18n="home.rewardsTitle">ANIMA Points</h2>
+            <p data-i18n="home.rewardsShort">Earn points and exchange them for unique offers.</p>
+            <span class="home-rewards-hint" data-i18n="home.rewardsHint">How it works</span>
           </div>
-          <div class="home-points-panel">
-            <p>ANIMA Points</p>
-            <div class="points-total">
-              <strong>2,450</strong>
-              <img src="./assets/anima-points-coin.png" alt="" aria-hidden="true" />
-            </div>
-            <p>Until next level<br />550 pts needed</p>
-            <div class="progress"><span style="width:72%"></span></div>
-            <span class="level-badge">Level 2</span>
+          <div class="home-rewards-visual" aria-hidden="true">
+            <img class="home-rewards-mark" src="./assets/anima-points-coin.png" alt="" />
+            <span class="home-rewards-chevron" aria-hidden="true">→</span>
           </div>
-        </section>
+        </button>
 
-        <section class="quick-section" aria-labelledby="quick-access-title">
+        <section class="quick-section home-ecosystem-section" aria-labelledby="ecosystem-title">
           <div class="section-heading">
-            <h2 id="quick-access-title">Quick Access</h2>
+            <h2 id="ecosystem-title">ANIMA Ecosystem</h2>
             <a href="#" data-screen="explore">See all</a>
           </div>
           <div class="quick-grid">
-            <a
-              class="quick-card visual"
-              href="#"
-              data-screen="jobs"
-              style="--quick-img: url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=700&q=82')"
-            >
+            <a class="quick-card" href="#" data-screen="jobs">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="4" y="7" width="16" height="12" rx="2" />
                 <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
                 <path d="M4 12h16" />
               </svg>
-              <strong data-i18n="home.jobsTitle">Jobs</strong>
-              <span data-i18n="home.jobsSubtitle">Find your next opportunity</span>
+              <strong>Jobs</strong>
+              <span>Find your next opportunity</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
-            <a
-              class="quick-card visual"
-              href="#"
-              data-screen="services"
-              style="--quick-img: url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=700&q=82')"
-            >
+            <a class="quick-card" href="#" data-screen="community">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="9" cy="8" r="4" />
                 <path d="M2 21a7 7 0 0 1 14 0" />
-                <path d="M17 11l2 2 4-5" />
-                <path d="M16 19h6" />
+                <circle cx="17" cy="9" r="3" />
+                <path d="M17 15a5 5 0 0 1 5 5" />
               </svg>
-              <strong>Services</strong>
-              <span>Find or offer services</span>
+              <strong>Community</strong>
+              <span>Connect and grow together</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
-            <a
-              class="quick-card visual"
-              href="#"
-              data-screen="for-business"
-              style="--quick-img: url('https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=700&q=82')"
-            >
+            <a class="quick-card" href="#" data-screen="for-business">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m8 12 3 3a3 3 0 0 0 4.2 0L22 8.2 18.8 5 12 11.8" />
                 <path d="m16 12-4-4-6 6a3 3 0 0 0 4.2 4.2l1.8-1.8" />
-                <path d="m2 8.2 3.2-3.2L9 8.8" />
               </svg>
-              <strong data-i18n="home.businessTitle">For Business</strong>
-              <span data-i18n="home.businessSubtitle">Grow your business</span>
+              <strong>For Business</strong>
+              <span>Grow your business</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
-            <a
-              class="quick-card visual"
-              href="#"
-              data-screen="tech-solutions"
-              style="--quick-img: url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=700&q=82')"
-            >
+            <a class="quick-card" href="#" data-screen="tech-solutions">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <path d="M3 9h18" />
                 <path d="m10 13-2 2 2 2" />
                 <path d="m14 13 2 2-2 2" />
               </svg>
-              <strong data-i18n="home.digitalTitle">Digital Solutions</strong>
-              <span data-i18n="home.digitalSubtitle">Web, apps &amp; digital services</span>
+              <strong>Digital Solutions</strong>
+              <span>Web, apps &amp; CRM</span>
               <span class="round-arrow" aria-hidden="true">→</span>
             </a>
           </div>
         </section>
 
-        <section class="home-qr-card" aria-labelledby="home-qr-title">
-          <div class="home-qr-copy">
-            <h2 id="home-qr-title">Explore more.<br />Earn more.</h2>
-            <p>Book, visit and enjoy - get ANIMA Points with every experience.</p>
-            <a href="#" data-screen="rewards">Learn more <span aria-hidden="true">→</span></a>
-          </div>
-          <div class="home-qr-visual" aria-hidden="true">
-            <div class="home-qr-phone">
-              <div class="home-qr-code">
-                <span></span><span></span><span></span><span></span>
-              </div>
-              <small>Scan QR at partner venues and earn ANIMA Points</small>
-            </div>
-          </div>
-        </section>
-
-        <section class="feed-preview-section" aria-labelledby="feed-preview-title">
-          <div class="section-heading">
-            <h2 id="feed-preview-title" data-i18n="home.trending">Trending in Dalat</h2>
-            <a href="#" data-screen="feed" data-i18n="common.openFeed">Open Feed</a>
-          </div>
-          <div class="feed-preview-grid">
-            <a
-              class="feed-preview-card"
-              href="#"
-              data-screen="feed"
-              style="--trend-img: url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=900&q=82')"
-            >
-              <span data-i18n="home.feedCafeEyebrow">New cafe</span>
-              <strong data-i18n="home.feedCafeTitle">Forest cafe joined ANIMA</strong>
-              <small data-i18n="home.feedCafeSubtitle">Partner rewards available today</small>
+        <footer class="home-footer-row" aria-label="Footer links">
+          <a class="home-footer-link" href="#" data-screen="partners">Our Partners</a>
+          <div class="home-social-links">
+            <a class="home-social-icon" href="https://instagram.com/anima.dalat" target="_blank" rel="noopener" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
             </a>
-            <a
-              class="feed-preview-card"
-              href="#"
-              data-screen="feed"
-              style="--trend-img: url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=900&q=82')"
-            >
-              <span data-i18n="home.feedTonightEyebrow">Tonight</span>
-              <strong data-i18n="home.feedTonightTitle">Live music near the lake</strong>
-              <small data-i18n="home.feedTonightSubtitle">128 people interested</small>
-            </a>
-            <a
-              class="feed-preview-card premium"
-              href="#"
-              data-screen="experiences"
-              style="--trend-img: url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=82')"
-            >
-              <span data-i18n="home.feedExperienceEyebrow">Experience</span>
-              <strong data-i18n="home.feedExperienceTitle">Hidden Waterfalls Route</strong>
-              <small data-i18n="home.feedExperienceSubtitle">Private route revealed after booking</small>
-            </a>
-            <a
-              class="feed-preview-card"
-              href="#"
-              data-screen="eat"
-              style="--trend-img: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=82')"
-            >
-              <span data-i18n="home.feedPromoEyebrow">Partner promo</span>
-              <strong data-i18n="home.feedPromoTitle">15% off at Pine Brew</strong>
-              <small data-i18n="home.feedPromoSubtitle">Available for ANIMA users today</small>
+            <a class="home-social-icon" href="https://t.me/sheffshady" target="_blank" rel="noopener" aria-label="Telegram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.2 4.4 18 19.5c-.2 1-.8 1.3-1.7.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.3L5.6 13 1 11.6c-1-.3-1-1 .2-1.5L19.3 3c.9-.3 1.6.2 1.9 1.4Z"/></svg>
             </a>
           </div>
-        </section>
-
-        <section class="brand-footer" aria-labelledby="partners-title">
-          <div class="brand-footer-head">
-            <div>
-              <h2 id="partners-title" data-i18n="home.partners">Our Partners</h2>
-              <p data-i18n="home.partnersSubtitle">Local places powering the ΛNIMΛ Dalat ecosystem.</p>
-            </div>
-            <div class="social-block">
-              <h2 data-i18n="home.social">Connect With Us</h2>
-              <div class="social-links" aria-label="ANIMA social links">
-                <a href="https://www.instagram.com/anima.dalat/" target="_blank" rel="noopener" aria-label="Instagram">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="4" y="4" width="16" height="16" rx="5" />
-                    <circle cx="12" cy="12" r="3.5" />
-                    <path d="M17.5 6.5h.01" />
-                  </svg>
-                </a>
-                <a href="https://t.me/sheffshady" target="_blank" rel="noopener" aria-label="Telegram">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M21 4 3 11.2l6.8 2.4L17 7.5l-5.6 7.5 5.8 4L21 4Z" />
-                    <path d="m9.8 13.6.4 5.1 2.1-3.6" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-          <div class="partner-mini-grid">
-            <a class="partner-mini-card" href="#" data-screen="partners">
-              <span style="--partner-thumb: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong data-i18n="home.partner1Title">La Viet Coffee</strong>
-              <small data-i18n="home.partner1Subtitle">Cafe · Specialty Coffee</small>
-            </a>
-            <a class="partner-mini-card" href="#" data-screen="partners">
-              <span style="--partner-thumb: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong data-i18n="home.partner2Title">Goldient Boutique</strong>
-              <small data-i18n="home.partner2Subtitle">Hotel · Boutique Stay</small>
-            </a>
-            <a class="partner-mini-card" href="#" data-screen="partners">
-              <span style="--partner-thumb: url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80')"></span>
-              <strong data-i18n="home.partner3Title">ANIMA Rides</strong>
-              <small data-i18n="home.partner3Subtitle">Transport · Verified</small>
-            </a>
-          </div>
-        </section>
+        </footer>
 
       </section>
 
       <section class="screen-view" aria-live="polite" hidden></section>
 
-      <nav class="utility-nav release-hidden" id="anima-hub" aria-label="ANIMA Hub tools" aria-hidden="true" inert hidden>
-        <a class="ai-tool active" href="#" data-screen="assistant">
-          <span class="orb" aria-hidden="true"></span>
-          <span>AI Assistant</span>
+      <nav class="utility-nav" id="anima-hub" aria-label="ANIMA Hub tools" aria-hidden="true">
+        <a href="#" data-screen="explore">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m14 10-4 4"/><path d="m10 10 4 4"/></svg>
+          <span>Explore</span>
         </a>
         <a href="#" data-screen="map">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -405,15 +271,7 @@
           </svg>
           <span>Map</span>
         </a>
-        <a href="#" data-screen="nearby">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 21s7-5.7 7-12A7 7 0 0 0 5 9c0 6.3 7 12 7 12Z" />
-            <circle cx="12" cy="9" r="2.5" />
-            <path d="M7 21h10" />
-          </svg>
-          <span>Nearby</span>
-        </a>
-        <a href="#">
+        <a href="#" data-hub-scan>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="5" y="5" width="14" height="14" rx="2" />
             <path d="M9 9h.01" />
@@ -424,22 +282,22 @@
           </svg>
           <span>Scan QR</span>
         </a>
-        <a class="emergency-tool" href="#" data-screen="emergency">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-            <path d="M12 8v5" />
-            <path d="M12 17h.01" />
-          </svg>
-          <span>Emergency</span>
+        <a href="#" data-screen="exchange">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11"/><path d="m15 4 3 3-3 3"/><path d="M17 17H6"/><path d="m9 14-3 3 3 3"/></svg>
+          <span>Exchange</span>
         </a>
-        <a href="#">
+        <a href="#" data-screen="store">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+          <span>Store</span>
+        </a>
+        <a href="#" data-hub-support>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 14a8 8 0 0 1 16 0" />
             <path d="M4 14v3a2 2 0 0 0 2 2h1v-7H6a2 2 0 0 0-2 2Z" />
             <path d="M20 14v3a2 2 0 0 1-2 2h-1v-7h1a2 2 0 0 1 2 2Z" />
             <path d="M12 20h3" />
           </svg>
-          <span>24/7 Support</span>
+          <span>Support</span>
         </a>
       </nav>
 
@@ -451,16 +309,6 @@
           </svg>
           <span data-i18n="common.home">Home</span>
         </a>
-        <a href="#" data-screen="saved">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z" />
-          </svg>
-          <span data-i18n="common.saved">Saved</span>
-        </a>
-        <button class="center-action" type="button" aria-label="Open ANIMA Hub" aria-expanded="false">
-          <span class="hub-logo" aria-hidden="true">A</span>
-          <span class="visually-hidden">ANIMA Hub</span>
-        </button>
         <a href="#" data-screen="feed">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="9" cy="8" r="4" />
@@ -469,6 +317,17 @@
             <path d="M17 15a5 5 0 0 1 5 5" />
           </svg>
           <span data-i18n="common.feed">Feed</span>
+        </a>
+        <button class="center-action" type="button" aria-label="Open ANIMA Hub" aria-expanded="false">
+          <span class="hub-logo" aria-hidden="true">A</span>
+          <span class="visually-hidden">ANIMA Hub</span>
+        </button>
+        <a href="#" data-screen="store">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 8h12l-1 12H7L6 8Z" />
+            <path d="M9 8a3 3 0 0 1 6 0" />
+          </svg>
+          <span>Store</span>
         </a>
         <a href="#" data-screen="profile">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -479,9 +338,9 @@
         </a>
       </nav>
     </main>
-    <script defer src="./mock-data.js"></script>
+    <script defer src="./mock-data.js?v=2026-06-19-stay-gallery-fix"></script>
     <script defer src="./services/database.js?v=2026-06-18-release-ui-1"></script>
     <script defer src="./services/weather.js?v=2026-06-18-release-ui-1"></script>
-    <script defer src="./script.js?v=2026-06-18-cinematic-auth-1"></script>
+    <script defer src="./script.js?v=2026-06-19-stay-gallery-fix"></script>
   </body>
 </html>

@@ -11,6 +11,7 @@ const animaHub = document.querySelector("#anima-hub");
 const centerAction = document.querySelector(".center-action");
 const filterButton = document.querySelector(".filter-button");
 const homeSearchForm = document.querySelector(".search-card");
+const searchShell = document.querySelector(".search-shell");
 const searchInput = document.querySelector("#search-input");
 const searchSuggestions = document.querySelector("[data-search-suggestions]");
 const languagePill = document.querySelector(".language-pill");
@@ -33,8 +34,11 @@ let searchIndexCache = [];
 let searchIndexLocale = "";
 let adminContentDirty = true;
 let startupTasksScheduled = false;
+const MARKETPLACE_STORAGE_KEY = "anima.marketplace.listings";
 const stayFilters = { category: "Hotels" };
-const rootScreens = new Set(["home", "explore", "saved", "for-business", "profile"]);
+let feedFilters = { tab: "Today" };
+const feedLikes = new Set(JSON.parse(safeStorageGet("anima.feed.likes", "[]") || "[]"));
+const rootScreens = new Set(["home", "explore", "feed", "store", "profile", "assistant"]);
 const userSettings = {
   language: safeStorageGet("anima.language", "English"),
   currency: safeStorageGet("anima.currency", data.user.currency || "VND"),
@@ -53,6 +57,7 @@ const AUTH_PIN_UNLOCK_KEY = "anima.auth.pin.unlock.v1";
 const AUTH_PERSISTENT_SESSION_KEY = "anima.auth.session.persistent.v1";
 const AUTH_TRUSTED_DEVICE_KEY = "anima.auth.trusted-device.v1";
 const AUTH_DEVICE_ID_KEY = "anima.auth.device-id.v1";
+const AUTH_INTRO_SEEN_KEY = "anima.auth.intro.seen.v1";
 const authState = {
   view: "choice",
   error: "",
@@ -84,45 +89,11 @@ const notificationState = {
   replying: false,
 };
 const HERO_BACKGROUND_TRANSITION_MS = 760;
-const HERO_RAIN_BACKGROUND_SRC = "./assets/hero-time-rain.png";
+const HERO_BACKGROUND_SRC = "./assets/home-background.jpg";
+const HERO_RAIN_BACKGROUND_SRC = "./assets/home-background.jpg";
 const RAINY_WEATHER_CODES = new Set([61, 63, 65, 80, 81, 82, 95]);
 const HERO_BACKGROUND_SCHEDULES = [
-  {
-    key: "night",
-    src: "./assets/hero-time-1-night.jpg",
-    startMinute: 21 * 60,
-    endMinute: 24 * 60 - 1,
-  },
-  {
-    key: "late-night",
-    src: "./assets/hero-time-1-night.jpg",
-    startMinute: 0,
-    endMinute: 5 * 60 + 50,
-  },
-  {
-    key: "dawn",
-    src: "./assets/hero-time-2-dawn.jpg",
-    startMinute: 5 * 60 + 51,
-    endMinute: 7 * 60 + 29,
-  },
-  {
-    key: "day",
-    src: "./assets/hero-time-3-day.jpg",
-    startMinute: 7 * 60 + 30,
-    endMinute: 17 * 60,
-  },
-  {
-    key: "sunset",
-    src: "./assets/hero-time-4-sunset.jpg",
-    startMinute: 17 * 60 + 1,
-    endMinute: 19 * 60,
-  },
-  {
-    key: "evening",
-    src: "./assets/hero-time-5-evening.jpg",
-    startMinute: 19 * 60 + 1,
-    endMinute: 20 * 60 + 59,
-  },
+  { key: "default", src: HERO_BACKGROUND_SRC, startMinute: 0, endMinute: 24 * 60 - 1 },
 ];
 const HERO_GREETING_SCHEDULES = [
   {
@@ -164,19 +135,19 @@ function startLaunchAnimation() {
   window.clearTimeout(launchAnimationForceTimeout);
   launchAnimationTimeout = window.setTimeout(() => {
     finishLaunchAnimation();
-  }, 1820);
+  }, 1000);
   launchAnimationForceTimeout = window.setTimeout(() => {
     finishLaunchAnimation(true);
-  }, 2460);
+  }, 1600);
 }
 
 function finishLaunchAnimation(forceRemove = false) {
   if (!launchScreen || !document.body) return;
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
   const elapsed = launchAnimationStartedAt ? now - launchAnimationStartedAt : Infinity;
-  if (!forceRemove && elapsed < 1750) {
+  if (!forceRemove && elapsed < 900) {
     window.clearTimeout(launchAnimationTimeout);
-    launchAnimationTimeout = window.setTimeout(() => finishLaunchAnimation(false), 1750 - elapsed);
+    launchAnimationTimeout = window.setTimeout(() => finishLaunchAnimation(false), 900 - elapsed);
     return;
   }
   const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
@@ -192,7 +163,7 @@ function finishLaunchAnimation(forceRemove = false) {
     launchScreen.remove();
     perfMark("launchScreen:remove", startedAt);
     bootMark("launchScreen:removed");
-  }, 560);
+  }, 480);
 }
 
 function perfMark(label, startedAt) {
@@ -253,7 +224,7 @@ function logResourceSummary() {
     );
   });
   performance.getEntriesByType("resource")
-    .filter((entry) => /script\.js|styles\.css|database\.js|weather\.js|mock-data\.js|anima-wordmark|hero-time|home-background|anima-store-card/i.test(entry.name))
+    .filter((entry) => /script\.js|styles\.css|database\.js|weather\.js|mock-data\.js|anima-wordmark|home-background|anima-store-card/i.test(entry.name))
     .forEach((entry) => {
       console.log(
         `[perf][resource] ${entry.initiatorType || "resource"} ${entry.name} duration=${entry.duration.toFixed(1)}ms transfer=${entry.transferSize || 0}B decoded=${entry.decodedBodySize || 0}B`,
@@ -357,19 +328,29 @@ function syncRealPartners() {
   }));
 }
 
+function getDemoStays() {
+  const all = cloneData(baseData.stays || []);
+  return ["Hotels", "Apartments", "Houses"]
+    .map((category) => all.find((stay) => stay.category === category))
+    .filter(Boolean);
+}
+
 function resetAdminContent() {
-  data.feed = [];
-  data.stays = [];
+  data.feed = cloneData(baseData.feed || []);
+  data.communityPosts = cloneData(baseData.communityPosts || []);
+  data.marketplace = cloneData(baseData.marketplace || []);
+  data.stays = getDemoStays();
   data.restaurants = [];
   data.experiences = [];
   data.jobs = [];
   data.services = [];
   data.communityPosts = [];
   data.techSolutions = [];
-  data.transport = { rentals: [] };
+  data.nature = [];
+  data.transport = cloneData(baseData.transport || { rentals: [] });
   data.businessBenefits = cloneData(baseData.businessBenefits || []);
-  data.partners = [];
-  data.adminStoreProducts = [];
+  data.partners = cloneData(baseData.partners || []);
+  data.adminStoreProducts = cloneData(baseData.storeProducts || []);
   data.adminCategories = [];
 }
 
@@ -504,6 +485,26 @@ const I18N = {
     "home.feedPromoTitle": "15% off at Pine Brew",
     "home.feedPromoSubtitle": "Available for ANIMA users today",
     "home.partners": "Our Partners",
+    "home.rewardsTitle": "ANIMA Points",
+    "home.rewardsShort": "Earn points and exchange them for unique offers.",
+    "home.rewardsHint": "How it works",
+    "points.guide.title": "ANIMA Points",
+    "points.guide.intro": "ANIMA Points is the built-in bonus system of the platform. You collect points for activity with partners and spend them on perks inside the ecosystem.",
+    "points.guide.earnTitle": "How to earn",
+    "points.guide.earn1": "Visit partner cafes, restaurants, stays and experiences.",
+    "points.guide.earn2": "Scan the ANIMA QR code after your visit.",
+    "points.guide.earn3": "Book and pay through ANIMA to receive bonus points.",
+    "points.guide.earn4": "Join community activity and special city events.",
+    "points.guide.useTitle": "How to use",
+    "points.guide.use1": "Open Rewards in your profile to see your balance and level.",
+    "points.guide.use2": "Redeem points for partner discounts and member offers.",
+    "points.guide.use3": "Track history of scans, bookings and bonuses.",
+    "points.guide.stepsTitle": "Quick start",
+    "points.guide.step1": "Sign in to your ANIMA account.",
+    "points.guide.step2": "Choose a partner place in the app.",
+    "points.guide.step3": "Scan QR on site or complete booking.",
+    "points.guide.step4": "Points are added automatically to your balance.",
+    "points.guide.openRewards": "Open Rewards Center",
     "home.partnersSubtitle": "Local places powering the ΛNIMΛ Dalat ecosystem.",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Cafe · Specialty Coffee",
@@ -522,6 +523,7 @@ const I18N = {
     "time.city": "Dalat time",
     "profile.english": "English",
     "profile.russian": "Russian",
+    "profile.vietnamese": "Tiếng Việt",
     "profile.language": "Language",
   },
   Russian: {
@@ -562,6 +564,26 @@ const I18N = {
     "home.feedPromoTitle": "15% скидка в Pine Brew",
     "home.feedPromoSubtitle": "Доступно для пользователей ANIMA сегодня",
     "home.partners": "Наши партнёры",
+    "home.rewardsTitle": "ANIMA Points",
+    "home.rewardsShort": "Копите поинты и обменивайте их на уникальные предложения.",
+    "home.rewardsHint": "Как это работает",
+    "points.guide.title": "ANIMA Points",
+    "points.guide.intro": "ANIMA Points — встроенная бонусная система платформы. Вы получаете баллы за активность у партнёров и тратите их на привилегии внутри экосистемы.",
+    "points.guide.earnTitle": "Как начисляются",
+    "points.guide.earn1": "Посещайте партнёрские кафе, рестораны, жильё и впечатления.",
+    "points.guide.earn2": "Сканируйте ANIMA QR после визита.",
+    "points.guide.earn3": "Бронируйте и оплачивайте через ANIMA — получайте бонусные баллы.",
+    "points.guide.earn4": "Участвуйте в жизни сообщества и городских событиях.",
+    "points.guide.useTitle": "Как использовать",
+    "points.guide.use1": "Откройте Rewards в профиле — там баланс и уровень.",
+    "points.guide.use2": "Обменивайте баллы на скидки партнёров и member offers.",
+    "points.guide.use3": "Следите за историей сканов, броней и бонусов.",
+    "points.guide.stepsTitle": "Быстрый старт",
+    "points.guide.step1": "Войдите в аккаунт ANIMA.",
+    "points.guide.step2": "Выберите партнёрское место в приложении.",
+    "points.guide.step3": "Отсканируйте QR на месте или завершите бронирование.",
+    "points.guide.step4": "Баллы автоматически зачисляются на баланс.",
+    "points.guide.openRewards": "Открыть Rewards Center",
     "home.partnersSubtitle": "Локальные места, которые развивают экосистему ΛNIMΛ в Далате.",
     "home.partner1Title": "La Viet Coffee",
     "home.partner1Subtitle": "Кафе · Спешелти кофе",
@@ -580,7 +602,57 @@ const I18N = {
     "time.city": "Время в Далате",
     "profile.english": "English",
     "profile.russian": "Русский",
+    "profile.vietnamese": "Tiếng Việt",
     "profile.language": "Язык",
+  },
+  Vietnamese: {
+    "language.choose": "Chọn ngôn ngữ",
+    "common.home": "Trang chủ",
+    "common.feed": "Bảng tin",
+    "common.explore": "Khám phá",
+    "common.saved": "Đã lưu",
+    "common.business": "Kinh doanh",
+    "common.profile": "Hồ sơ",
+    "common.openFeed": "Mở bảng tin",
+    "home.goodMorning": "Chào buổi sáng,",
+    "home.welcome": "Chào mừng đến Đà Lạt",
+    "home.subtitle": "Hệ sinh thái số của bạn để khám phá Đà Lạt.",
+    "home.search": "Tìm địa điểm, dịch vụ, trải nghiệm...",
+    "home.mainSections": "Danh mục chính",
+    "home.ecosystem": "Hệ sinh thái ANIMA",
+    "home.partners": "Đối tác của chúng tôi",
+    "home.rewardsTitle": "ANIMA Points",
+    "home.rewardsShort": "Tích điểm và đổi lấy các ưu đãi độc quyền.",
+    "home.rewardsHint": "Cách hoạt động",
+    "points.guide.title": "ANIMA Points",
+    "points.guide.intro": "ANIMA Points là hệ thống thưởng tích hợp của nền tảng. Bạn nhận điểm khi tương tác với đối tác và dùng điểm cho ưu đãi trong hệ sinh thái.",
+    "points.guide.earnTitle": "Cách tích điểm",
+    "points.guide.earn1": "Ghé quán cà phê, nhà hàng, chỗ ở và trải nghiệm đối tác.",
+    "points.guide.earn2": "Quét mã ANIMA QR sau khi ghé thăm.",
+    "points.guide.earn3": "Đặt và thanh toán qua ANIMA để nhận điểm thưởng.",
+    "points.guide.earn4": "Tham gia cộng đồng và sự kiện trong thành phố.",
+    "points.guide.useTitle": "Cách sử dụng",
+    "points.guide.use1": "Mở Rewards trong hồ sơ để xem số dư và cấp độ.",
+    "points.guide.use2": "Đổi điểm lấy giảm giá đối tác và ưu đãi thành viên.",
+    "points.guide.use3": "Theo dõi lịch sử quét, đặt chỗ và thưởng.",
+    "points.guide.stepsTitle": "Bắt đầu nhanh",
+    "points.guide.step1": "Đăng nhập tài khoản ANIMA.",
+    "points.guide.step2": "Chọn địa điểm đối tác trong ứng dụng.",
+    "points.guide.step3": "Quét QR tại chỗ hoặc hoàn tất đặt chỗ.",
+    "points.guide.step4": "Điểm được cộng tự động vào số dư.",
+    "points.guide.openRewards": "Mở Rewards Center",
+    "weather.label": "Thời tiết hiện tại",
+    "weather.loading": "Đang tải thời tiết...",
+    "weather.unavailable": "Thời tiết tạm thời không khả dụng",
+    "weather.feelsLike": "Cảm giác",
+    "weather.humidity": "Độ ẩm",
+    "weather.wind": "Gió",
+    "weather.updated": "Cập nhật",
+    "time.city": "Giờ Đà Lạt",
+    "profile.english": "English",
+    "profile.russian": "Русский",
+    "profile.vietnamese": "Tiếng Việt",
+    "profile.language": "Ngôn ngữ",
   },
 };
 
@@ -651,12 +723,37 @@ const phraseTranslations = {
   "For You": "Для вас",
   Today: "Сегодня",
   Events: "События",
+  Community: "Сообщество",
+  Forum: "Форум",
+  Classifieds: "Объявления",
+  Marketplace: "Объявления",
+  "Add your listing": "Добавить объявление",
+  "Contact seller": "Связаться с продавцом",
+  "Sign in to post sale listings in Marketplace.": "Войдите, чтобы публиковать объявления.",
+  "Sign in to post classifieds.": "Войдите, чтобы публиковать объявления.",
+  "Listing published": "Объявление опубликовано",
+  "Your listing is now visible in Marketplace.": "Ваше объявление опубликовано в разделе объявлений.",
+  "Your classified is now live.": "Ваше объявление опубликовано в разделе объявлений.",
+  Price: "Цена",
+  Category: "Категория",
+  Condition: "Состояние",
+  Description: "Описание",
+  "Contact method": "Способ связи",
+  "Publish listing": "Опубликовать",
+  "Share your experience": "Поделиться опытом",
+  Like: "Нравится",
+  Comment: "Комментарий",
+  Share: "Поделиться",
+  "Write a comment": "Написать комментарий",
+  "Post comment": "Отправить",
+  "Share experience": "Поделиться опытом",
+  "Tell the community about a place or moment in Dalat.": "Расскажите сообществу о месте или моменте в Далате.",
   Promotions: "Акции",
   "New Places": "Новые места",
   Food: "Еда",
   "Digital Nomads": "Для удалённой работы",
   "For Digital Nomads": "Для удалённой работы",
-  "What's happening in Dalat today.": "Что происходит в Далате сегодня.",
+  "Share experiences, discover Dalat today.": "Делитесь опытом и открывайте Далат сегодня.",
   "Connect. Share. Grow together in Dalat.": "Общайтесь, делитесь и развивайтесь вместе в Далате.",
   "Boutique nature living in the mountains.": "Бутик-жильё и жизнь среди горной природы.",
   "Curated coffee culture, restaurants and local flavors of Dalat.": "Кофейная культура, рестораны и локальные вкусы Далата.",
@@ -740,6 +837,89 @@ const phraseTranslations = {
   "Weather temporarily unavailable": "Погода временно недоступна",
   "Loading weather...": "Загрузка погоды...",
   Selected: "Выбрано",
+  "Gift Sets": "Наборы подарков",
+  Merch: "Мерч",
+  Honey: "Мёд",
+  Dairy: "Молочное",
+  Slavic: "Славянское",
+  Gifts: "Подарки",
+  Coffee: "Кофе",
+  "Honey & Bee Products": "Мёд и продукты пчеловодства",
+  "Dairy Products": "Молочные продукты",
+  "Slavic Products": "Славянские продукты",
+};
+
+const vietnamesePhraseTranslations = {
+  Home: "Trang chủ",
+  Feed: "Bảng tin",
+  Profile: "Hồ sơ",
+  Back: "Quay lại",
+  "See all": "Xem tất cả",
+  "Learn more": "Tìm hiểu thêm",
+  Stay: "Lưu trú",
+  "Eat & Drink": "Ăn uống",
+  Tours: "Tour",
+  Transport: "Di chuyển",
+  Exchange: "Đổi tiền",
+  Services: "Dịch vụ",
+  Hotels: "Khách sạn",
+  Apartments: "Căn hộ",
+  Houses: "Nhà",
+  Coffee: "Cà phê",
+  "Honey & Bee Products": "Mật ong",
+  "Dairy Products": "Sản phẩm sữa",
+  "Slavic Products": "Sản phẩm Slavic",
+  "Gift Sets": "Quà tặng",
+  Merch: "Merch",
+  Honey: "Mật ong",
+  Dairy: "Sữa",
+  Slavic: "Slavic",
+  Gifts: "Quà tặng",
+  "Book now": "Gửi yêu cầu",
+  "Send request": "Gửi yêu cầu",
+  "Verified by ANIMA": "Đã xác minh bởi ANIMA",
+  "Tap card": "Chạm vào thẻ",
+  "No stays found": "Không tìm thấy chỗ ở",
+  Booking: "Đặt phòng",
+  "Check-in": "Nhận phòng",
+  "Check-out": "Trả phòng",
+  Guests: "Khách",
+  Phone: "Điện thoại",
+  "Full name": "Họ và tên",
+  "Booking note": "Ghi chú đặt phòng",
+  Nights: "Đêm",
+  Total: "Tổng",
+  "About this place": "Về nơi này",
+  Location: "Vị trí",
+  "Open in Google Maps": "Mở trong Google Maps",
+  Today: "Hôm nay",
+  Events: "Sự kiện",
+  Community: "Cộng đồng",
+  Forum: "Diễn đàn",
+  Classifieds: "Tin rao",
+  Marketplace: "Tin rao",
+  "Sign in to post classifieds.": "Đăng nhập để đăng tin rao vặt.",
+  "Your classified is now live.": "Tin rao của bạn đã được đăng.",
+  "Add your listing": "Đăng tin bán",
+  "Contact seller": "Liên hệ người bán",
+  "Sign in to post sale listings in Marketplace.": "Đăng nhập để đăng tin bán trên Marketplace.",
+  "Listing published": "Đã đăng tin",
+  "Your listing is now visible in Marketplace.": "Tin của bạn đã hiển thị trên Marketplace.",
+  Price: "Giá",
+  Category: "Danh mục",
+  Condition: "Tình trạng",
+  Description: "Mô tả",
+  "Contact method": "Liên hệ",
+  "Publish listing": "Đăng tin",
+  "Share your experience": "Chia sẻ trải nghiệm",
+  Like: "Thích",
+  Comment: "Bình luận",
+  Share: "Chia sẻ",
+  "Write a comment": "Viết bình luận",
+  "Post comment": "Gửi",
+  "Share experience": "Chia sẻ trải nghiệm",
+  "Tell the community about a place or moment in Dalat.": "Hãy kể cho cộng đồng về một địa điểm hoặc khoảnh khắc ở Đà Lạt.",
+  "Share experiences, discover Dalat today.": "Chia sẻ trải nghiệm và khám phá Đà Lạt hôm nay.",
 };
 
 const reversePhraseTranslations = Object.fromEntries(Object.entries(phraseTranslations).map(([en, ru]) => [ru, en]));
@@ -1865,8 +2045,13 @@ async function handlePinKey(event) {
   finishAuthSuccess(currentAuthUser);
 }
 
+function markAuthIntroSeen() {
+  safeStorageSet(AUTH_INTRO_SEEN_KEY, "1");
+}
+
 function finishAuthSuccess(user) {
   const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
+  markAuthIntroSeen();
   currentAuthUser = user;
   applyCurrentAuthUser();
   hideAuth();
@@ -1883,6 +2068,7 @@ function finishAuthSuccess(user) {
 
 function finishGuestMode() {
   const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
+  markAuthIntroSeen();
   hideAuth();
   phoneShell.hidden = false;
   if (currentScreen !== "home") navigateTo("home", { preserveHistory: false });
@@ -1894,21 +2080,10 @@ function finishGuestMode() {
 
 function startAuthFlow() {
   perfRun("startAuthFlow", () => {
+    safeStorageSet(AUTH_INTRO_SEEN_KEY, "1");
     refreshCurrentAuthUser();
-    if (!currentAuthUser) {
-      showAuth("choice", { error: "", pinBuffer: "", firstPin: "", pinPurpose: "setup" });
-      return;
-    }
-    applyCurrentAuthUser();
-    if (currentAuthUser.security?.pinEnabled && !isPinUnlocked(currentAuthUser) && !hasTrustedDevice(currentAuthUser)) {
-      phoneShell.hidden = false;
-      showAuth("pin-unlock", { pinPurpose: "unlock", pinBuffer: "", firstPin: "" });
-      return;
-    }
-    if (currentAuthUser.security?.pinEnabled && hasTrustedDevice(currentAuthUser)) {
-      unlockPin(currentAuthUser);
-    }
-    finishAuthSuccess(currentAuthUser);
+    if (!currentAuthUser) saveGuestSession();
+    finishGuestMode();
   });
 }
 
@@ -1921,9 +2096,9 @@ const screenConfig = {
   },
   feed: {
     title: "Feed",
-    subtitle: "What's happening in Dalat today.",
+    subtitle: "Share experiences, discover Dalat today.",
     search: "Search posts, places, events...",
-    chips: ["For You", "Today", "Events", "Promotions", "New Places", "Community", "Digital Nomads", "Food", "Experiences"],
+    chips: ["Today", "Events", "Forum", "Classifieds"],
   },
   community: {
     title: "Community",
@@ -1935,7 +2110,7 @@ const screenConfig = {
     title: "Stay",
     subtitle: "Boutique nature living in the mountains.",
     search: "Search villas, apartments, hotels...",
-    chips: ["Hotels", "Apartments", "Houses", "Villas"],
+    chips: ["Hotels", "Apartments", "Houses"],
   },
   eat: {
     title: "Eat & Drink",
@@ -1947,7 +2122,13 @@ const screenConfig = {
     title: "Experiences",
     subtitle: "Discover curated journeys around Dalat.",
     search: "",
-    chips: ["Nature", "Romantic", "Adventure", "Coffee", "Relax", "Photography", "Wellness", "Premium"],
+    chips: ["Tours", "Waterfalls", "Farms", "Adventure", "Wellness", "Romantic"],
+  },
+  nature: {
+    title: "Nature",
+    subtitle: "Waterfalls, viewpoints, parks and Dalat landscapes.",
+    search: "Search waterfalls, parks, farms...",
+    chips: ["Waterfalls", "Viewpoints", "Parks", "Hiking", "Coffee Farms", "Strawberry Farms"],
   },
   transport: {
     title: "Transport",
@@ -2057,6 +2238,12 @@ const screenConfig = {
     search: "",
     chips: [],
   },
+  assistant: {
+    title: "ANIMA Hub",
+    subtitle: "Quick access to key platform tools.",
+    search: "",
+    chips: [],
+  },
   search: {
     title: "Search",
     subtitle: "Find places, stays, food, services and more.",
@@ -2082,6 +2269,8 @@ document.querySelectorAll("[data-screen]").forEach((item) => {
     navigateTo(item.dataset.screen);
   });
 });
+
+document.querySelector("[data-anima-points-guide]")?.addEventListener("click", openAnimaPointsGuideModal);
 
 document.querySelectorAll(".category-card").forEach((button) => {
   button.addEventListener("click", () => {
@@ -2133,9 +2322,43 @@ document.addEventListener("click", (event) => {
 languagePill?.addEventListener("click", (event) => {
   event.stopPropagation();
   const isOpen = languagePill.getAttribute("aria-expanded") === "true";
-  languagePill.setAttribute("aria-expanded", String(!isOpen));
-  languageMenu.hidden = isOpen;
+  if (isOpen) closeLanguageMenu();
+  else openLanguageMenu();
 });
+
+function openLanguageMenu() {
+  languagePill?.setAttribute("aria-expanded", "true");
+  if (languageMenu) {
+    languageMenu.hidden = false;
+    positionLanguageMenu();
+  }
+  document.body.classList.add("language-menu-open");
+}
+
+function closeLanguageMenu() {
+  languagePill?.setAttribute("aria-expanded", "false");
+  if (languageMenu) languageMenu.hidden = true;
+  document.body.classList.remove("language-menu-open");
+}
+
+function positionLanguageMenu() {
+  if (!languageMenu || !languagePill) return;
+  const shell = phoneShell?.getBoundingClientRect();
+  const pill = languagePill.getBoundingClientRect();
+  if (!shell) return;
+  languageMenu.style.top = `${pill.bottom + 8}px`;
+  languageMenu.style.right = `${Math.max(16, window.innerWidth - shell.right + 16)}px`;
+  languageMenu.style.left = "auto";
+}
+
+window.addEventListener("resize", () => {
+  if (languageMenu && !languageMenu.hidden) positionLanguageMenu();
+  if (searchSuggestions && !searchSuggestions.hidden) positionSearchSuggestions();
+});
+
+phoneShell?.addEventListener("scroll", () => {
+  if (searchSuggestions && !searchSuggestions.hidden) positionSearchSuggestions();
+}, { passive: true });
 
 languageMenu?.querySelectorAll("button").forEach((button) => {
   button.addEventListener("click", (event) => {
@@ -2147,9 +2370,8 @@ languageMenu?.querySelectorAll("button").forEach((button) => {
     } else {
       renderWeather(latestWeather);
       renderLocalTime(new Date());
+      closeLanguageMenu();
     }
-    languagePill?.setAttribute("aria-expanded", "false");
-    if (languageMenu) languageMenu.hidden = true;
   });
 });
 
@@ -2158,23 +2380,38 @@ centerAction?.addEventListener("click", () => {
   isOpen ? closeHub() : openHub();
 });
 
-animaHub?.querySelectorAll('a[href="#"]:not([data-screen])').forEach((item) => {
+animaHub?.querySelectorAll("[data-hub-scan]").forEach((item) => {
   item.addEventListener("click", (event) => {
     event.preventDefault();
-    const label = item.textContent.trim() || "ANIMA Hub";
     closeHub();
-    if (label.includes("Scan QR")) openActionModal("Scan QR", "QR scanner is prepared for partner rewards and store checkout.");
-    else if (label.includes("Emergency")) openActionModal("Emergency", "Emergency contact flow will connect to local support and manager escalation.");
-    else if (label.includes("Support")) openActionModal("24/7 Support", "ANIMA support request is ready for manager contact.");
-    else if (label.includes("Nearby")) openActionModal("Nearby", "Nearby recommendations will use map and location data in the next MVP stage.");
-    else openActionModal(label, "This ANIMA Hub action is prepared for the next MVP stage.");
+    openActionModal(
+      isRussianLanguage() ? "Сканер QR" : "Scan QR",
+      isRussianLanguage()
+        ? "Сканер QR готов для наград партнёров и оплаты в Store."
+        : "QR scanner is ready for partner rewards and store checkout."
+    );
   });
+});
+
+animaHub?.querySelectorAll("[data-hub-support]").forEach((item) => {
+  item.addEventListener("click", (event) => {
+    event.preventDefault();
+    closeHub();
+    openRequestModal({
+      title: isRussianLanguage() ? "Поддержка ANIMA" : "ANIMA Support",
+      subject: "ANIMA Support",
+      cta: isRussianLanguage() ? "Отправить" : "Submit",
+    });
+  });
+});
+
+animaHub?.querySelectorAll('a[data-screen]').forEach((item) => {
+  item.addEventListener("click", () => closeHub());
 });
 
 document.addEventListener("click", (event) => {
   if (languageMenu && !languageMenu.hidden && !languageMenu.contains(event.target) && !languagePill?.contains(event.target)) {
-    languageMenu.hidden = true;
-    languagePill?.setAttribute("aria-expanded", "false");
+    closeLanguageMenu();
   }
   if (!phoneShell?.classList.contains("hub-open")) return;
   const target = event.target;
@@ -2183,7 +2420,10 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeHub();
+  if (event.key === "Escape") {
+    closeHub();
+    closeLanguageMenu();
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -2296,7 +2536,7 @@ homeSearchForm?.addEventListener("submit", (event) => {
 });
 
 document.addEventListener("click", (event) => {
-  if (homeSearchForm?.contains(event.target) || searchSuggestions?.contains(event.target)) return;
+  if (searchShell?.contains(event.target) || searchSuggestions?.contains(event.target)) return;
   hideSearchSuggestions();
 });
 
@@ -2328,10 +2568,6 @@ function refreshCurrentScreenFromAdmin() {
 }
 
 function navigateTo(screen, options = {}) {
-  if (screen === "profile" && !currentAuthUser) {
-    openGuestRestrictionModal(userSettings.language === "Russian" ? "Профиль" : "Profile");
-    return;
-  }
   syncAdminContent();
   if (!options.preserveHistory && screen !== currentScreen) {
     previousScreen = currentScreen;
@@ -2374,15 +2610,10 @@ function goBack() {
 }
 
 function updateBottomNav(screen) {
-  const exploreScreens = new Set(["explore", "stay", "eat", "experiences", "transport", "exchange", "services", "store", "jobs", "community", "tech-solutions"]);
-  const businessScreens = new Set(["for-business", "partners", "contact"]);
   document.querySelectorAll(".bottom-nav a[data-screen]").forEach((link) => {
-    const target = link.dataset.screen;
-    const active = target === screen
-      || (target === "explore" && exploreScreens.has(screen))
-      || (target === "for-business" && businessScreens.has(screen));
-    link.classList.toggle("active", active);
+    link.classList.toggle("active", link.dataset.screen === screen);
   });
+  centerAction?.classList.toggle("active", centerAction?.getAttribute("aria-expanded") === "true");
 }
 
 function renderHeader(config, options = {}) {
@@ -2443,7 +2674,15 @@ function t(key) {
 function translatePhrase(text) {
   const trimmed = text.trim();
   if (!trimmed) return text;
-  const translated = userSettings.language === "Russian" ? phraseTranslations[trimmed] : reversePhraseTranslations[trimmed];
+  if (userSettings.language === "Russian") {
+    const translated = phraseTranslations[trimmed];
+    return translated ? text.replace(trimmed, translated) : text;
+  }
+  if (userSettings.language === "Vietnamese") {
+    const translated = vietnamesePhraseTranslations[trimmed];
+    return translated ? text.replace(trimmed, translated) : text;
+  }
+  const translated = reversePhraseTranslations[trimmed];
   if (!translated) return text;
   return text.replace(trimmed, translated);
 }
@@ -2493,10 +2732,12 @@ function syncTopLanguage() {
 }
 
 function syncLanguageState() {
-  const isRussian = userSettings.language === "Russian";
-  document.documentElement.lang = isRussian ? "ru" : "en";
-  phoneShell?.classList.toggle("language-russian", isRussian);
-  phoneShell?.classList.toggle("language-english", !isRussian);
+  const lang = userSettings.language;
+  const htmlLang = lang === "Russian" ? "ru" : lang === "Vietnamese" ? "vi" : "en";
+  document.documentElement.lang = htmlLang;
+  phoneShell?.classList.toggle("language-russian", lang === "Russian");
+  phoneShell?.classList.toggle("language-english", lang === "English");
+  phoneShell?.classList.toggle("language-vietnamese", lang === "Vietnamese");
 }
 
 function setLanguage(language) {
@@ -2513,6 +2754,7 @@ function setLanguage(language) {
     bindScreenActions();
     applyI18n(screenView);
   }
+  closeLanguageMenu();
 }
 
 function setCurrency(currency) {
@@ -2539,7 +2781,7 @@ async function initWeather() {
 }
 
 function formatLocalDate(now = new Date()) {
-  const locale = userSettings.language === "Russian" ? "ru-RU" : "en-GB";
+  const locale = userSettings.language === "Russian" ? "ru-RU" : userSettings.language === "Vietnamese" ? "vi-VN" : "en-GB";
   return new Intl.DateTimeFormat(locale, {
     weekday: "short",
     day: "numeric",
@@ -2549,7 +2791,7 @@ function formatLocalDate(now = new Date()) {
 }
 
 function formatLocalClock(now = new Date()) {
-  const locale = userSettings.language === "Russian" ? "ru-RU" : "en-GB";
+  const locale = userSettings.language === "Russian" ? "ru-RU" : userSettings.language === "Vietnamese" ? "vi-VN" : "en-GB";
   return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
@@ -2767,8 +3009,16 @@ function isRussianLanguage() {
   return userSettings.language === "Russian";
 }
 
+function stayCopy(en, ru, vi = en) {
+  if (userSettings.language === "Russian") return ru;
+  if (userSettings.language === "Vietnamese") return vi;
+  return en;
+}
+
 function verifiedAnimaLabel() {
-  return isRussianLanguage() ? "✓ Проверено ANIMA" : "✓ Verified by ANIMA";
+  if (userSettings.language === "Russian") return "✓ Проверено ANIMA";
+  if (userSettings.language === "Vietnamese") return "✓ Đã xác minh bởi ANIMA";
+  return "✓ Verified by ANIMA";
 }
 
 function detailsLabel() {
@@ -2897,6 +3147,127 @@ function escapeAttr(value) {
   return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function resolveMediaUrl(value) {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  if (/^(https?:|data:|blob:)/i.test(source)) return source;
+  if (source.startsWith("./")) return source.slice(1);
+  if (source.startsWith("assets/")) return `/${source}`;
+  if (source.startsWith("/")) return source;
+  return source;
+}
+
+function mediaUrlKey(value) {
+  const resolved = resolveMediaUrl(value);
+  if (!resolved) return "";
+  const clean = resolved.split("?")[0].split("#")[0].toLowerCase();
+  try {
+    if (/^https?:/i.test(clean)) return new URL(clean).pathname.toLowerCase();
+  } catch {}
+  return clean;
+}
+
+function stayGallery(stay = {}) {
+  const seen = new Set();
+  const images = [];
+  const candidates = [
+    stay.image,
+    ...(Array.isArray(stay.gallery) ? stay.gallery : []),
+  ].filter(Boolean);
+  candidates.forEach((raw) => {
+    const key = mediaUrlKey(raw);
+    const url = resolveMediaUrl(raw);
+    if (!url || seen.has(key)) return;
+    seen.add(key);
+    images.push(url);
+  });
+  return images;
+}
+
+function renderStayGalleryGrid(gallery = []) {
+  if (!gallery.length) return "";
+  const sideThumbs = gallery.length > 1 ? gallery.slice(1) : [];
+  const sideCount = sideThumbs.length;
+  const sideClass = sideCount >= 3
+    ? "stay-gallery-thumbs--triple"
+    : sideCount === 2
+      ? "stay-gallery-thumbs--double"
+      : "stay-gallery-thumbs--single";
+  return `
+    <section class="stay-gallery-grid" data-stay-gallery-grid data-stay-gallery data-stay-gallery-images="${escapeAttr(JSON.stringify(gallery))}">
+      <figure class="stay-gallery-hero" data-stay-gallery-hero tabindex="0">
+        <img src="${gallery[0]}" alt="" data-stay-gallery-main loading="eager" decoding="async" draggable="false" />
+        ${gallery.length > 1 ? `
+          <button class="stay-gallery-swipe prev" type="button" data-stay-gallery-prev aria-label="${stayCopy("Previous photo", "Предыдущее фото", "Ảnh trước")}">‹</button>
+          <button class="stay-gallery-swipe next" type="button" data-stay-gallery-next aria-label="${stayCopy("Next photo", "Следующее фото", "Ảnh tiếp")}">›</button>
+          <span class="stay-gallery-counter" data-stay-gallery-counter>1 / ${gallery.length}</span>
+        ` : ""}
+      </figure>
+      ${sideCount ? `
+        <div class="stay-gallery-thumbs ${sideClass}" data-stay-gallery-thumbs data-thumb-count="${sideCount}">
+          ${sideThumbs.map((image, index) => `
+            <button
+              type="button"
+              class="stay-gallery-thumb"
+              data-stay-gallery-thumb="${index + 1}"
+              aria-label="${stayCopy("Photo", "Фото", "Ảnh")} ${index + 2}"
+              aria-pressed="false"
+            >
+              <img src="${image}" alt="" loading="lazy" decoding="async" draggable="false" />
+            </button>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${gallery.length > 1 ? `
+        <div class="stay-gallery-mobile-row" data-stay-gallery-mobile-row>
+          ${gallery.map((image, index) => `
+            <button
+              type="button"
+              class="stay-gallery-mobile-thumb${index === 0 ? " active" : ""}"
+              data-stay-gallery-thumb="${index}"
+              aria-label="${stayCopy("Photo", "Фото", "Ảnh")} ${index + 1}"
+              aria-pressed="${index === 0 ? "true" : "false"}"
+            >
+              <img src="${image}" alt="" loading="lazy" decoding="async" draggable="false" />
+            </button>
+          `).join("")}
+        </div>
+      ` : ""}
+    </section>
+  `;
+}
+
+function renderStayBookingForm(stay, nightlyRate, cleaning, service) {
+  return `
+    <form class="booking-form stay-booking-form" data-booking-form="${escapeAttr(stay.title)}" data-nightly-rate="${nightlyRate}" data-cleaning-fee="${cleaning}" data-service-fee="${service}">
+      <div class="stay-booking-fields">
+        <label><span>${stayCopy("Check-in", "Заезд", "Nhận phòng")}</span><input name="checkin" type="date" required /></label>
+        <label><span>${stayCopy("Check-out", "Выезд", "Trả phòng")}</span><input name="checkout" type="date" required /></label>
+        <label><span>${stayCopy("Guests", "Гостей", "Khách")}</span><input name="guests" type="number" min="1" max="${stay.guests || 6}" value="${Math.min(stay.guests || 2, 2)}" required /></label>
+        <label class="full"><span>${stayCopy("Full name", "Имя", "Họ và tên")}</span><input name="fullName" type="text" required /></label>
+        <label class="full"><span>${stayCopy("Phone", "Телефон", "Điện thoại")}</span><input name="phone" type="tel" placeholder="+84 ..." required /></label>
+      </div>
+      <div class="stay-booking-total" data-booking-summary>
+        <span>${stayCopy("Total", "Итого", "Tổng")}</span>
+        <strong>${formatPriceMap(stay.priceMap, stay.price)}</strong>
+      </div>
+      <button class="gold-button booking-submit full-width" type="submit">${stayCopy("Book & pay", "Забронировать и оплатить", "Đặt và thanh toán")}</button>
+    </form>
+  `;
+}
+
+function openStayBookingModal(stay) {
+  const nightlyRate = parsePriceNumber(stay.price);
+  const cleaning = parsePriceNumber(stay.cleaningFee);
+  const service = parsePriceNumber(stay.serviceFee);
+  const modal = createSettingsModal(
+    stayCopy("Book your stay", "Забронировать", "Đặt phòng"),
+    renderStayBookingForm(stay, nightlyRate, cleaning, service),
+    { centered: false, panelClass: "stay-booking-modal-panel request-sheet-panel" },
+  );
+  bindBookingForms(modal);
+}
+
 function escapeJsString(value) {
   return JSON.stringify(String(value ?? "")).slice(1, -1);
 }
@@ -2942,22 +3313,23 @@ function renderScreen(screen) {
   if (screen === "feed") return renderFeed(config);
   if (screen === "saved") return renderSaved(config);
   if (screen === "bookings") return renderBookingsScreen(config);
-  if (screen === "community") return renderCommunity(config);
+  if (screen === "jobs") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Вакансии и отклики появятся в ближайшем обновлении." : "Jobs and applications will appear in the next update." });
+  if (screen === "services") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Локальные сервисы скоро будут доступны." : "Local services will be available soon." });
+  if (screen === "community") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Комьюнити ANIMA готовится к запуску." : "ANIMA Community is preparing to launch." });
   if (screen === "stay") return renderStay(config);
-  if (screen === "eat") return renderEat(config);
-  if (screen === "experiences") return renderExperiences(config);
+  if (screen === "eat") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Кафе и рестораны появятся в следующем релизе." : "Cafes and restaurants are coming in the next release." });
+  if (screen === "experiences") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Туры и впечатления скоро будут доступны." : "Tours and experiences are coming soon." });
+  if (screen === "nature") return renderCleanSection(config, { title: config.title, text: isRussianLanguage() ? "Природные маршруты скоро будут доступны." : "Nature routes are coming soon." });
   if (screen === "transport") return renderTransport(config);
   if (screen === "for-business") return renderBusiness(config);
   if (screen === "tech-solutions") return renderTechSolutions(config);
-  if (screen === "jobs") return renderJobs(config);
-  if (screen === "services") return renderServices(config);
   if (screen === "exchange") return renderExchange(config);
   if (screen === "map") return renderMap(config);
   if (screen === "store") return renderStore(config);
   if (screen === "about") return renderAbout(config);
   if (screen === "partners") return renderPartners(config);
   if (screen === "contact") return renderContact(config);
-  if (screen === "assistant") return renderAssistant(config);
+  if (screen === "assistant") return renderHubScreen(config);
   if (screen === "nearby") return renderNearby(config);
   if (screen === "emergency") return renderEmergency(config);
 
@@ -3127,8 +3499,26 @@ function hideSearchSuggestions() {
   activeSearchIndex = -1;
   if (!searchSuggestions) return;
   searchSuggestions.innerHTML = "";
-  searchSuggestions.style.display = "none";
+  searchSuggestions.hidden = true;
+  searchSuggestions.classList.remove("is-visible");
+  document.body.classList.remove("search-suggestions-open");
   searchInput?.setAttribute("aria-expanded", "false");
+}
+
+function positionSearchSuggestions() {
+  if (!searchSuggestions || searchSuggestions.hidden || !searchInput) return;
+  const field = searchInput.getBoundingClientRect();
+  const shell = phoneShell?.getBoundingClientRect();
+  if (!field.width) return;
+  const horizontalInset = shell ? Math.max(16, (window.innerWidth - shell.right) / 2 + 16) : 16;
+  const maxWidth = shell ? shell.width - 32 : window.innerWidth - 32;
+  const width = Math.min(field.width, maxWidth);
+  const left = shell
+    ? Math.min(Math.max(field.left, shell.left + 16), shell.right - width - 16)
+    : Math.max(16, field.left);
+  searchSuggestions.style.width = `${width}px`;
+  searchSuggestions.style.left = `${left}px`;
+  searchSuggestions.style.top = `${field.bottom + 8}px`;
 }
 
 function syncSearchSuggestionState() {
@@ -3179,17 +3569,24 @@ function renderSearchSuggestions(query) {
           data-search-pick="${escapeAttr(item.detailTitle)}"
           data-search-index="${index}"
         >
-          <strong>${escapeHtml(item.title)}</strong>
-          <span>${escapeHtml(translatePhrase(item.groupLabel))} · ${escapeHtml(translatePhrase(item.category || ""))}</span>
+          <div class="search-suggestion-copy">
+            <strong>${escapeHtml(item.title)}</strong>
+            <span>${escapeHtml(translatePhrase(item.groupLabel))} · ${escapeHtml(translatePhrase(item.category || ""))}</span>
+          </div>
         </button>
       `).join("")
     : `
       <div class="search-suggestion-item search-suggestion-empty">
-        <strong>${isRussianLanguage() ? "Ничего не найдено" : "Nothing found"}</strong>
-        <span>${isRussianLanguage() ? "Попробуйте другой запрос" : "Try another query"}</span>
+        <div class="search-suggestion-copy">
+          <strong>${isRussianLanguage() ? "Ничего не найдено" : "Nothing found"}</strong>
+          <span>${isRussianLanguage() ? "Попробуйте другой запрос" : "Try another query"}</span>
+        </div>
       </div>
     `;
-  searchSuggestions.style.display = "grid";
+  searchSuggestions.hidden = false;
+  searchSuggestions.classList.add("is-visible");
+  document.body.classList.add("search-suggestions-open");
+  positionSearchSuggestions();
   searchInput?.setAttribute("aria-expanded", "true");
 }
 
@@ -3290,15 +3687,11 @@ function renderStore(config) {
         </button>
       </header>
 
-      <a class="store-welcome-card" href="#store-products" aria-label="Explore ANIMA Store products">
-        <img src="./assets/anima-store-card.jpg" alt="ANIMA Store curated products from Dalat" loading="lazy" decoding="async" />
-      </a>
-
-      <nav class="store-category-row" id="store-products" aria-label="Store categories">
-        ${categories.map(([label, icon], index) => `
-          <button class="${label === selectedStoreCategory ? "active" : ""}" type="button" data-store-category="${label}">
+      <nav class="category-row store-categories-grid" id="store-products" aria-label="Store categories">
+        ${categories.map(([label, icon]) => `
+          <button class="category-card store-category-card ${label === selectedStoreCategory ? "active" : ""}" type="button" data-store-category="${label}">
             ${storeIcon(icon)}
-            <span>${translatePhrase(label)}</span>
+            <span>${storeCategoryLabel(label)}</span>
           </button>
         `).join("")}
       </nav>
@@ -3321,13 +3714,21 @@ function storeCategories() {
   return [
     ["Coffee", "coffee"],
     ["Honey & Bee Products", "honey"],
-    ["Strawberry", "strawberry"],
     ["Dairy Products", "dairy"],
-    ["Flowers", "flower"],
-    ["Merch", "shirt"],
+    ["Slavic Products", "slavic"],
     ["Gift Sets", "gift"],
-    ["Eco Products", "eco"],
+    ["Merch", "shirt"],
   ];
+}
+
+function storeCategoryLabel(label) {
+  const shortLabels = {
+    "Honey & Bee Products": "Honey",
+    "Dairy Products": "Dairy",
+    "Slavic Products": "Slavic",
+    "Gift Sets": "Gifts",
+  };
+  return translatePhrase(shortLabels[label] || label);
 }
 
 function storeProducts() {
@@ -3342,6 +3743,90 @@ function storeProducts() {
     item.image,
   ]);
   return adminProducts;
+}
+
+function renderNature(config) {
+  const items = data.nature || [];
+  const ru = isRussianLanguage();
+  return `
+    <div class="screen-inner">
+      ${renderHeader(config, { back: true })}
+      ${renderFilterChips(config)}
+      <section class="screen-section">
+        <div class="listing-stack">
+          ${items.length ? items.map((item) => listingCard({
+            ...item,
+            meta: item.distance || item.location || "Dalat",
+            cta: ru ? "Маршрут" : "Route",
+          })).join("") : `<article class="empty-state"><h3>${ru ? "Природа Далата" : "Dalat nature"}</h3><p>${ru ? "Маршруты и места появятся здесь." : "Routes and places will appear here."}</p></article>`}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderHubScreen(config) {
+  const ru = isRussianLanguage();
+  const links = [
+    ["Explore", ru ? "Все разделы ANIMA" : "All ANIMA sections", "explore"],
+    ["Store", ru ? "Кофе, мёд и подарки" : "Coffee, honey and gifts", "store"],
+    ["Map", ru ? "Карта города" : "City map", "map"],
+    ["Exchange", ru ? "Обмен валют 0.5%" : "Currency exchange 0.5%", "exchange"],
+    ["For Business", ru ? "Стать партнёром" : "Become a partner", "for-business"],
+  ];
+  return `
+    <div class="screen-inner explore-screen">
+      ${renderHeader({ ...config, title: "ANIMA Hub" }, { back: true })}
+      <section class="screen-section">
+        <div class="explore-grid">${links.map(([title, text, screen]) => `
+          <button class="explore-card" type="button" data-screen="${screen}">
+            <span>${title}</span>
+            <p>${text}</p>
+          </button>
+        `).join("")}</div>
+      </section>
+      <section class="screen-section">
+        <button class="gold-button full-width" type="button" data-request-open data-request-subject="ANIMA Support" data-request-cta="${ru ? "Отправить" : "Submit"}">${ru ? "Связаться с поддержкой" : "Contact support"}</button>
+      </section>
+    </div>
+  `;
+}
+
+function renderNearby(config) {
+  const ru = isRussianLanguage();
+  const nearby = (data.restaurants || []).slice(0, 4).concat((data.places || []).slice(0, 2));
+  return `
+    <div class="screen-inner">
+      ${renderHeader({ ...config, title: ru ? "Рядом" : "Nearby" }, { back: true })}
+      <section class="screen-section">
+        <div class="listing-stack">${nearby.map((item) => listingCard({
+          ...item,
+          meta: item.distance || item.meta || "Dalat",
+        })).join("")}</div>
+      </section>
+    </div>
+  `;
+}
+
+function renderEmergency(config) {
+  const ru = isRussianLanguage();
+  const items = data.emergencies || [];
+  return `
+    <div class="screen-inner">
+      ${renderHeader({ ...config, title: ru ? "Экстренные службы" : "Emergency" }, { back: true })}
+      <section class="screen-section emergency-list">
+        ${items.map((item) => `
+          <article class="profile-control-card">
+            <div>
+              <strong>${item.title}</strong>
+              <p>${item.description}</p>
+            </div>
+            <a class="gold-button mini-cta" href="tel:${item.number}">${item.number}</a>
+          </article>
+        `).join("")}
+      </section>
+    </div>
+  `;
 }
 
 function renderStoreProductArea() {
@@ -3366,6 +3851,7 @@ function storeIcon(type) {
     shirt: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4 4 7l3 4 1-1v10h8V10l1 1 3-4-4-3-2 2h-4L8 4Z" /></svg>`,
     gift: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4z" /><path d="M12 10v10M4 14h16" /><path d="M12 10c-4 0-5-5-2-5 2 0 2 3 2 5Zm0 0c4 0 5-5 2-5-2 0-2 3-2 5Z" /></svg>`,
     dairy: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 5v12H8V8l1-5Z" /><path d="M8 9h8" /></svg>`,
+    slavic: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="6"/><path d="M8 7c1-2 3-3 4-3s3 1 4 3"/><path d="M6 13h12"/></svg>`,
     eco: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c8 0 13-5 14-14-8 1-13 6-14 14Z" /><path d="M5 19c3-4 6-7 10-9" /></svg>`,
   };
   return icons[type] || icons.gift;
@@ -3591,26 +4077,12 @@ function detailKey(item) {
 
 function openDetailScreen(key) {
   if (!key) return;
-  if (!currentAuthUser) {
-    openGuestRestrictionModal(userSettings.language === "Russian" ? "Нужен вход" : "Sign in required");
-    return;
-  }
-  const item = findItemByKey(key);
-  if (item && data.stays.some((stay) => stay.id === item.id || stay.title === item.title)) {
-    const slug = item.slug || slugify(item.title);
-    if (slug) {
-      window.location.href = `/${slug}/detail/`;
-      return;
-    }
-  }
   navigateTo(`detail:${key}`);
 }
 
 window.openDetailScreen = openDetailScreen;
 
 function renderScreenExtra(screen) {
-  if (screen === "stay") return `<article class="ai-card"><h2>Long-term stays for digital nomads</h2><p>Monthly homes with desks, fast Wi-Fi and quiet neighborhoods.</p></article>`;
-  if (screen === "eat") return `<article class="ai-card"><h2>Scan QR at partner cafes</h2><p>Earn ANIMA Points when you visit selected cafes and restaurants.</p></article>`;
   return "";
 }
 
@@ -3620,7 +4092,7 @@ function renderExplore(config) {
     ["Stay", ru ? "Отели, виллы и апартаменты" : "Hotels, villas and apartments", "stay"],
     ["Eat & Drink", ru ? "Кафе, рестораны и specialty coffee" : "Cafes, restaurants and specialty coffee", "eat"],
     ["Experiences", ru ? "Туры, активности и маршруты" : "Tours, activities and routes", "experiences"],
-    ["Nature", ru ? "Водопады, фермы и viewpoints" : "Waterfalls, farms and viewpoints", "experiences"],
+    ["Nature", ru ? "Водопады, фермы и viewpoints" : "Waterfalls, farms and viewpoints", "nature"],
     ["Transport", ru ? "Байки, трансферы и аренда" : "Bikes, transfers and rentals", "transport"],
     ["Exchange", ru ? "Заявка на обмен валют" : "Currency exchange requests", "exchange"],
     ["Services", ru ? "Локальная помощь и сервисы" : "Local help and services", "services"],
@@ -3745,52 +4217,32 @@ function providerCard(provider) {
   `;
 }
 
+function renderCleanSection(config, options = {}) {
+  const ru = isRussianLanguage();
+  return `
+    <div class="screen-inner clean-section-screen">
+      ${renderHeader(config, { back: true })}
+      <section class="clean-section-card">
+        <p class="clean-section-kicker">${options.kicker || "ANIMA 1.0"}</p>
+        <h2>${options.title || config.title}</h2>
+        <p>${options.text || (ru ? "Раздел готовится к релизу. Скоро здесь появится полный функционал." : "This section is being prepared for release. Full functionality is coming soon.")}</p>
+        ${options.ctaScreen ? `<button class="gold-button" type="button" data-screen="${options.ctaScreen}">${options.ctaLabel || (ru ? "Открыть" : "Open")}</button>` : ""}
+      </section>
+    </div>
+  `;
+}
+
 function renderBusiness(config) {
   const ru = isRussianLanguage();
   return `
-    <div class="screen-inner business-screen">
+    <div class="screen-inner clean-section-screen">
       ${renderHeader(config, { back: true })}
-      <article class="feature-card economy-feature">
-        <div><p>${ru ? "Для бизнеса" : "For business"}</p><h2>${ru ? "Больше клиентов, больше возможностей, больше роста" : "More customers, more opportunities, more growth"}</h2><span>${ru ? "Подключайте свой бизнес к экосистеме ANIMA и получайте реальные заявки, видимость и поддержку." : "Connect your business to ANIMA and get real leads, visibility and support."}</span></div>
-        <div class="feature-footer"><span></span><a class="gold-button" href="#partner-application">${ru ? "Стать партнёром" : "Become a partner"}</a></div>
-      </article>
-      <section class="stats-grid">${[
-        ru ? ["Прямые заявки", "Получайте обращения и бронирования в одном месте"] : ["Direct leads", "Receive inquiries and bookings in one place"],
-        ru ? ["Поддержка ANIMA", "Менеджер помогает с запуском и модерацией"] : ["ANIMA support", "Manager helps with launch and moderation"],
-        ru ? ["Прозрачная аналитика", "Статусы заявок, броней и активности"] : ["Clear analytics", "Track requests, bookings and activity"],
-        ru ? ["Живой профиль", "Карточка бизнеса внутри приложения"] : ["Live profile", "Business card inside the app"],
-      ].map(([title, text]) => `<article><strong>${title}</strong><span>${text}</span></article>`).join("")}</section>
-      <section class="screen-section"><div class="section-heading compact"><h2>${ru ? "Наши привилегии" : "Benefits"}</h2></div><div class="benefit-grid">${[
-        { title: ru ? "Увеличение видимости" : "Visibility", description: ru ? "Ваш бизнес увидят пользователи ANIMA." : "Your business is visible to ANIMA users." },
-        { title: ru ? "Новые клиенты" : "New clients", description: ru ? "Получайте больше обращений и броней." : "Get more inquiries and bookings." },
-        { title: ru ? "Рост и аналитика" : "Growth & analytics", description: ru ? "Следите за результатом в кабинете." : "Track performance inside the dashboard." },
-        { title: ru ? "Доверие и бренд" : "Trust & brand", description: ru ? "Партнёрская отметка ANIMA повышает доверие." : "ANIMA partner mark improves trust." },
-        { title: ru ? "Маркетинг и акции" : "Marketing", description: ru ? "Запускайте акции и спецпредложения." : "Run offers and campaigns." },
-        { title: ru ? "Бонусы и награды" : "Rewards", description: ru ? "Подключайте бонусы и спецусловия для гостей." : "Offer perks and rewards to guests." },
-      ].map(benefitCard).join("")}</div></section>
-      <section class="screen-section"><div class="section-heading compact"><h2>${ru ? "Кому подходит" : "Best for"}</h2></div>${horizontalCards((ru ? ["Отели", "Рестораны", "Кафе", "Байк-аренда", "Магазины"] : ["Hotels", "Restaurants", "Cafes", "Bike rental", "Shops"]).map((title) => ({ title, category: ru ? "Партнёрская экосистема" : "Partner ecosystem", meta: ru ? "Видимость · заявки · поддержка" : "Visibility · leads · support" })))}</section>
-      <section id="partner-application" class="stay-detail-card">
-        <h2>${ru ? "Стать партнёром" : "Become a partner"}</h2>
-        <p>${ru ? "Заявка сразу попадёт в админку ANIMA." : "This application goes directly to ANIMA admin."}</p>
-        <form class="booking-form" data-partner-application-form>
-          <div class="booking-form-grid">
-            <label><span>${ru ? "ФИО" : "Full name"}</span><input name="fullName" required /></label>
-            <label><span>Email</span><input name="email" type="email" required /></label>
-            <label><span>${ru ? "Должность" : "Position"}</span><input name="position" /></label>
-            <label><span>${ru ? "Название бизнеса" : "Business name"}</span><input name="businessName" required /></label>
-            <label><span>${ru ? "Категория бизнеса" : "Business type"}</span><input name="businessType" required /></label>
-            <label class="full"><span>${ru ? "Описание бизнеса" : "Business description"}</span><textarea name="description" required></textarea></label>
-            <label class="full"><span>${ru ? "Адрес" : "Address"}</span><input name="address" required /></label>
-            <label><span>${ru ? "Телефон" : "Phone"}</span><input name="phone" required /></label>
-            <label><span>Telegram</span><input name="telegram" /></label>
-            <label><span>WhatsApp</span><input name="whatsapp" /></label>
-            <label><span>Zalo</span><input name="zalo" /></label>
-            <label><span>${ru ? "Способ связи" : "Preferred contact"}</span><input name="preferredContact" /></label>
-            <label class="full"><span>${ru ? "Сайт или соцсеть" : "Website or social"}</span><input name="website" /></label>
-            <label class="full"><span>${ru ? "Комментарий" : "Comment"}</span><textarea name="comment"></textarea></label>
-          </div>
-          <button class="gold-button" type="submit">${ru ? "Отправить заявку" : "Submit application"}</button>
-        </form>
+      <section class="clean-section-card">
+        <p class="clean-section-kicker">${ru ? "Для бизнеса" : "For Business"}</p>
+        <h2>${ru ? "Станьте партнёром ANIMA" : "Become an ANIMA Partner"}</h2>
+        <p>${ru ? "Подключите бизнес к экосистеме ANIMA: заявки, видимость, бонусы и поддержка." : "Connect your business to ANIMA: leads, visibility, rewards and support."}</p>
+        <button class="gold-button" type="button" data-request-open data-request-subject="${ru ? "Заявка партнёра" : "Partner application"}" data-request-cta="${ru ? "Отправить" : "Submit"}">${ru ? "Подать заявку" : "Apply as Partner"}</button>
+        <a class="text-link-button" href="./partner.html" target="_blank" rel="noopener">${ru ? "Войти в Partner Dashboard →" : "Login to Partner Dashboard →"}</a>
       </section>
     </div>
   `;
@@ -3801,16 +4253,16 @@ function benefitCard(item) {
 }
 
 function renderTechSolutions(config) {
+  const ru = isRussianLanguage();
   return `
-    <div class="screen-inner">
+    <div class="screen-inner clean-section-screen">
       ${renderHeader(config, { back: true })}
-      <article class="feature-card economy-feature tech">
-        <div><p>Digital transformation</p><h2>Turn your business into a digital experience</h2><span>We help local businesses create websites, apps, automation and booking systems.</span></div>
-        <div class="feature-footer"><span></span><a class="gold-button" href="#" ${actionAttrs("Request consultation", "Tell ANIMA what you want to build and a manager will contact you.")}>Request consultation</a></div>
-      </article>
-      <section class="screen-section"><div class="section-heading compact"><h2>Services</h2></div><div class="tech-grid">${data.techSolutions.map(techCard).join("")}</div></section>
-      <section class="screen-section"><div class="section-heading compact"><h2>Case studies</h2></div><div class="listing-stack">${data.caseStudies.map((item) => `<article class="listing-card"><div><p>Case study</p><h3>${item.title}</h3><span>${item.meta}</span></div><a class="mini-cta" href="#" ${actionAttrs(item.title, "Case study details will be available in the next MVP stage.")}>View</a></article>`).join("")}</div></section>
-      <article class="ai-card"><h2>Build with ANIMA</h2><p>Launch a cleaner digital presence for your local business.</p><a class="gold-button" href="#" ${actionAttrs("Start project", "A digital solutions project request will be prepared for ANIMA.")}>Start project</a></article>
+      <section class="clean-section-card">
+        <p class="clean-section-kicker">Digital Solutions</p>
+        <h2>${ru ? "Цифровые решения для бизнеса" : "Digital solutions for business"}</h2>
+        <p>${ru ? "Сайты, web apps, CRM, AI-интеграции и автоматизация для партнёров ANIMA." : "Websites, web apps, CRM, AI integrations and automation for ANIMA partners."}</p>
+        <button class="gold-button" type="button" data-request-open data-request-subject="${ru ? "Запрос на digital solutions" : "Digital solutions request"}" data-request-cta="${ru ? "Отправить" : "Submit"}">${ru ? "Запросить консультацию" : "Request consultation"}</button>
+      </section>
     </div>
   `;
 }
@@ -4004,70 +4456,415 @@ function renderMap(config) {
   return html;
 }
 
-function renderFeed(config) {
-  return `
-    <div class="screen-inner feed-screen immersive-root">
-      <nav class="feed-tabs" aria-label="Feed categories">
-        ${config.chips.filter((chip) => chip !== "Digital Nomads").map((chip, index) => `<button class="${index === 0 ? "active" : ""}" type="button" data-feed-filter="${chip}">${translatePhrase(chip)}</button>`).join("")}
-      </nav>
-      <section class="feed-list" aria-live="polite">
-        ${data.feed.map(feedCard).join("")}
-      </section>
-    </div>
-  `;
+function feedItemKey(item) {
+  return String(item.id || item.title || "").trim();
 }
 
-function feedCard(item) {
-  const cta = {
-    event: "View event",
-    promotion: "Claim",
-    community: "Comment",
-    place: "Open location",
-    experience: "View experience",
-  }[item.type] || "View";
+function getFeedItems() {
+  return (data.feed || []).map((item, index) => ({
+    ...item,
+    id: item.id || `feed-${index + 1}`,
+    feedTab: item.feedTab || (item.type === "event" || item.type === "experience" ? "Events" : item.type === "community" ? "Forum" : "Today"),
+  }));
+}
+
+function isFeedLiked(item) {
+  return feedLikes.has(feedItemKey(item));
+}
+
+function feedDisplayLikes(item) {
+  return Number(item.likeCount) || 0;
+}
+
+function feedAuthorInitials(author = "") {
+  return author.split(" ").filter(Boolean).map((name) => name[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function persistFeedLikes() {
+  safeStorageSet("anima.feed.likes", JSON.stringify([...feedLikes]));
+}
+
+function isAuthenticatedUser() {
+  return Boolean(currentAuthUser?.id) && !isGuestSession();
+}
+
+function getMarketplaceItems() {
+  const userItems = safeJsonParse(safeStorageGet(MARKETPLACE_STORAGE_KEY, "[]"), []);
+  const seed = (data.marketplace || []).map((item, index) => ({
+    ...item,
+    id: item.id || `marketplace-seed-${index + 1}`,
+  }));
+  return [...userItems, ...seed];
+}
+
+function persistMarketplaceListing(listing) {
+  const userItems = safeJsonParse(safeStorageGet(MARKETPLACE_STORAGE_KEY, "[]"), []);
+  userItems.unshift(listing);
+  safeStorageSet(MARKETPLACE_STORAGE_KEY, JSON.stringify(userItems));
+}
+
+function marketplaceCategories() {
+  return ["Housing", "Transport", "Electronics", "Furniture", "Clothing", "Services", "Other"];
+}
+
+function marketplaceConditions() {
+  return ["New", "Like new", "Used"];
+}
+
+function renderFeedCompose(activeTab) {
+  if (activeTab === "Classifieds") {
+    if (!isAuthenticatedUser()) {
+      return `
+        <article class="feed-marketplace-gate feed-compose-inline">
+          <p>${translatePhrase("Sign in to post classifieds.")}</p>
+          <button class="gold-button" type="button" data-feed-marketplace-auth>${userSettings.language === "Russian" ? "Авторизоваться" : "Sign in"}</button>
+        </article>
+      `;
+    }
+    return `
+      <button class="feed-compose feed-compose-marketplace feed-compose-inline" type="button" data-feed-marketplace-compose>
+        <span class="feed-compose-avatar">${feedAuthorInitials(currentUserProfileData().fullName || currentAuthUser?.fullName || "A")}</span>
+        <span class="feed-compose-text">${translatePhrase("Add your listing")}…</span>
+      </button>
+    `;
+  }
+  if (activeTab === "Forum") {
+    return `
+      <button class="feed-compose feed-compose-inline" type="button" data-feed-compose>
+        <span class="feed-compose-avatar">${feedAuthorInitials(currentUserProfileData().fullName || data.user?.name || "A")}</span>
+        <span class="feed-compose-text">${translatePhrase("Share your experience")}…</span>
+      </button>
+    `;
+  }
+  return "";
+}
+
+function marketplaceCard(item) {
+  const id = String(item.id || item.title || "").trim();
+  const author = item.author || "ANIMA Seller";
+  const meta = [item.category, item.condition, item.time, item.location].filter(Boolean).join(" · ");
   return `
-    <article class="city-feed-card ${item.type}" ${item.detailTitle ? `data-detail="${item.detailTitle}"` : ""}>
-      ${item.image ? `<img src="${item.image}" alt="" />` : ""}
-      <div class="city-feed-body">
-        <div class="feed-kicker">
-          <span>${item.label}</span>
-          <button class="save-button inline" type="button" aria-label="Save ${item.title}">♡</button>
+    <article class="marketplace-card" data-marketplace-id="${escapeAttr(id)}">
+      ${item.image ? `<img class="marketplace-image" src="${item.image}" alt="" loading="lazy" />` : ""}
+      <div class="marketplace-body">
+        <div class="marketplace-top">
+          <span class="marketplace-price">${item.price || ""}</span>
+          ${item.category ? `<span class="marketplace-category">${item.category}</span>` : ""}
         </div>
-        ${
-          item.type === "community"
-            ? `<div class="feed-mini-author"><span>${item.author.split(" ").map((name) => name[0]).join("")}</span><div><strong>${item.author}</strong><small>${item.badge}</small></div></div>`
-            : ""
-        }
         <h2>${item.title}</h2>
         <p>${item.text}</p>
-        <div class="feed-tags">
-          <span>${item.type}</span>
-          <span>${item.label}</span>
+        <div class="marketplace-meta">
+          <span>${author}</span>
+          <span>${meta}</span>
         </div>
-        <div class="feed-card-meta">
-          <span>${item.meta}</span>
-          ${item.points ? rewardBadge(item.points) : ""}
-        </div>
-        <div class="feed-social-actions">
-          <button type="button" class="feed-action-button">♡ Like</button>
-          <button type="button" class="feed-action-button">💬 Comment</button>
-          <button type="button" class="feed-action-button">↥ Share</button>
-          <a class="gold-button" href="#">${cta}</a>
+        <div class="marketplace-actions">
+          <button type="button" class="gold-button marketplace-contact" data-marketplace-contact>${translatePhrase("Contact seller")}</button>
+          <button type="button" class="thread-action" data-marketplace-share>
+            <span aria-hidden="true">↥</span> ${translatePhrase("Share")}
+          </button>
         </div>
       </div>
     </article>
   `;
 }
 
+function renderMarketplaceFeed() {
+  const items = getMarketplaceItems();
+  return items.length
+    ? items.map(marketplaceCard).join("")
+    : `<article class="empty-state thread-empty"><h3>${translatePhrase("Classifieds")}</h3><p>${isRussianLanguage() ? "Пока нет объявлений. Войдите и добавьте первое." : "No classifieds yet. Sign in and add the first one."}</p></article>`;
+}
+
+function openMarketplaceComposeModal() {
+  if (!isAuthenticatedUser()) {
+    return openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
+  }
+  const profile = currentUserProfileData();
+  const author = profile.fullName || currentAuthUser?.fullName || currentAuthUser?.username || "ANIMA User";
+  const modal = createSettingsModal(translatePhrase("Add your listing"), `
+    <p class="settings-modal-text">${isRussianLanguage() ? "Опубликуйте объявление о продаже для сообщества ANIMA." : "Publish a sale listing for the ANIMA community."}</p>
+    <form class="request-sheet-form" data-marketplace-compose-form>
+      <label><span>${translatePhrase("Category")}</span>
+        <select name="category" required>
+          ${marketplaceCategories().map((category) => `<option>${category}</option>`).join("")}
+        </select>
+      </label>
+      <label><span>${isRussianLanguage() ? "Название" : "Title"}</span><input name="title" required placeholder="${isRussianLanguage() ? "Например: Городской велосипед" : "e.g. City bike"}" /></label>
+      <label><span>${translatePhrase("Price")}</span><input name="price" required placeholder="2,500,000 VND" /></label>
+      <label><span>${translatePhrase("Condition")}</span>
+        <select name="condition" required>
+          ${marketplaceConditions().map((condition) => `<option>${condition}</option>`).join("")}
+        </select>
+      </label>
+      <label><span>${translatePhrase("Location")}</span><input name="location" placeholder="Ward 3, Dalat" /></label>
+      <label><span>${translatePhrase("Description")}</span><textarea name="text" rows="4" required placeholder="${isRussianLanguage() ? "Опишите товар и условия сделки" : "Describe the item and pickup terms"}"></textarea></label>
+      <label><span>${translatePhrase("Contact method")}</span><input name="contact" required placeholder="Telegram @username" value="${escapeAttr(profile.phone || currentAuthUser?.telegram || "")}" /></label>
+      <label><span>${isRussianLanguage() ? "Фото (URL)" : "Photo (URL)"}</span><input name="image" placeholder="https://..." /></label>
+      <button class="gold-button full-width" type="submit">${translatePhrase("Publish listing")}</button>
+    </form>
+  `, { panelClass: "request-sheet-panel" });
+  modal.querySelector("[data-marketplace-compose-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const listing = {
+      id: `mp-user-${Date.now()}`,
+      title: String(payload.title || "").trim(),
+      price: String(payload.price || "").trim(),
+      category: String(payload.category || "").trim(),
+      condition: String(payload.condition || "").trim(),
+      author,
+      authorId: currentAuthUser?.id || "",
+      time: isRussianLanguage() ? "сейчас" : "now",
+      location: String(payload.location || "Dalat").trim(),
+      text: String(payload.text || "").trim(),
+      image: String(payload.image || "").trim(),
+      contact: String(payload.contact || "").trim(),
+    };
+    persistMarketplaceListing(listing);
+    modal.remove();
+    if (currentScreen === "feed" && feedFilters.tab === "Classifieds") {
+      const list = screenView.querySelector("[data-feed-list]");
+      if (list) list.innerHTML = renderMarketplaceFeed();
+    }
+    openInfoModal(
+      translatePhrase("Listing published"),
+      translatePhrase("Your classified is now live."),
+    );
+  });
+}
+
+function renderFeed(config) {
+  const activeTab = feedFilters.tab || config.chips[0] || "Today";
+  return `
+    <div class="screen-inner feed-screen feed-threads immersive-root">
+      <nav class="feed-tabs feed-tabs-threads feed-tabs-four" aria-label="Feed categories">
+        ${config.chips.map((chip) => `<button class="${chip === activeTab ? "active" : ""}" type="button" data-feed-filter="${chip}">${translatePhrase(chip)}</button>`).join("")}
+      </nav>
+      <section class="feed-list feed-thread-list" data-feed-list aria-live="polite">
+        ${renderFilteredFeed(activeTab)}
+      </section>
+    </div>
+  `;
+}
+
+function feedCard(item) {
+  const id = feedItemKey(item);
+  const liked = isFeedLiked(item);
+  const author = item.author || "ANIMA Dalat";
+  const badge = item.badge || item.label || "";
+  const time = item.time || item.meta?.split("·")[0]?.trim() || "";
+  const location = item.location || "";
+  const likes = feedDisplayLikes(item) + (liked ? 1 : 0);
+  const comments = Number(item.commentCount) || 0;
+  return `
+    <article class="thread-card ${item.type || ""}" data-feed-id="${escapeAttr(id)}" ${item.detailTitle ? `data-detail="${escapeAttr(item.detailTitle)}"` : ""}>
+      <header class="thread-head">
+        <span class="thread-avatar" aria-hidden="true">${feedAuthorInitials(author)}</span>
+        <div class="thread-author">
+          <strong>${author}</strong>
+          <small>${[badge, time, location].filter(Boolean).join(" · ")}</small>
+        </div>
+        <button class="save-button inline thread-save" type="button" aria-label="Save ${escapeAttr(item.title)}">♡</button>
+      </header>
+      <div class="thread-body">
+        <h2>${item.title}</h2>
+        <p>${item.text}</p>
+        ${item.place ? `<span class="thread-place">⌖ ${item.place}</span>` : ""}
+        ${item.image ? `<img class="thread-image" src="${item.image}" alt="" loading="lazy" />` : ""}
+      </div>
+      <footer class="thread-actions">
+        <button type="button" class="thread-action ${liked ? "is-liked" : ""}" data-feed-like aria-pressed="${liked ? "true" : "false"}">
+          <span aria-hidden="true">${liked ? "♥" : "♡"}</span> ${translatePhrase("Like")} · ${likes}
+        </button>
+        <button type="button" class="thread-action" data-feed-comment>
+          <span aria-hidden="true">💬</span> ${translatePhrase("Comment")} · ${comments}
+        </button>
+        <button type="button" class="thread-action" data-feed-share>
+          <span aria-hidden="true">↥</span> ${translatePhrase("Share")}
+        </button>
+        ${item.points ? `<span class="thread-points">${rewardBadge(item.points)}</span>` : ""}
+      </footer>
+    </article>
+  `;
+}
+
 function renderFilteredFeed(filter) {
-  const normalized = String(filter || "For You").toLowerCase();
-  const items = normalized === "for you"
-    ? data.feed
-    : data.feed.filter((item) => {
-        const haystack = `${item.type} ${item.label} ${item.title} ${item.text} ${item.meta}`.toLowerCase();
-        return haystack.includes(normalized.replace("new places", "place")) || haystack.includes(normalized.replace("promotions", "promotion"));
-      });
-  return (items.length ? items : data.feed).map(feedCard).join("");
+  const tab = String(filter || feedFilters.tab || "Today");
+  const compose = renderFeedCompose(tab);
+  if (tab === "Classifieds") {
+    return `${compose}${renderMarketplaceFeed()}`;
+  }
+  const items = getFeedItems().filter((item) => item.feedTab === tab);
+  const posts = items.length
+    ? items.map(feedCard).join("")
+    : `<article class="empty-state thread-empty"><h3>${translatePhrase(tab)}</h3><p>${tab === "Forum"
+      ? (isRussianLanguage() ? "Пока нет публикаций. Нажмите выше и поделитесь опытом." : "No posts yet. Tap above to share your experience.")
+      : (isRussianLanguage() ? "Пока нет публикаций в этом разделе." : "No posts in this section yet.")}</p></article>`;
+  return `${compose}${posts}`;
+}
+
+function openFeedCommentModal(item) {
+  const title = translatePhrase("Comment");
+  const modal = createSettingsModal(title, `
+    <p class="settings-modal-text thread-modal-context"><strong>${item.author || "ANIMA"}</strong> · ${item.title}</p>
+    <form class="request-sheet-form" data-feed-comment-form>
+      <label><span>${translatePhrase("Write a comment")}</span><textarea name="comment" rows="4" required placeholder="${escapeAttr(item.title)}"></textarea></label>
+      <button class="gold-button full-width" type="submit">${translatePhrase("Post comment")}</button>
+    </form>
+  `, { panelClass: "request-sheet-panel" });
+  modal.querySelector("[data-feed-comment-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const comment = new FormData(event.currentTarget).get("comment");
+    submitUserRequest({
+      subject: `Feed comment: ${item.title}`,
+      comment: String(comment || ""),
+      name: currentUserProfileData().fullName || data.user?.name || "ANIMA User",
+    });
+    modal.remove();
+    const card = screenView.querySelector(`[data-feed-id="${feedItemKey(item).replace(/"/g, '\\"')}"]`);
+    const commentButton = card?.querySelector("[data-feed-comment]");
+    if (commentButton) {
+      const next = (Number(item.commentCount) || 0) + 1;
+      item.commentCount = next;
+      commentButton.innerHTML = `<span aria-hidden="true">💬</span> ${translatePhrase("Comment")} · ${next}`;
+    }
+    openInfoModal(
+      isRussianLanguage() ? "Комментарий отправлен" : "Comment posted",
+      isRussianLanguage() ? "Ваш комментарий опубликован в ленте." : "Your comment was added to the thread.",
+    );
+  });
+}
+
+function openFeedComposeModal() {
+  if (!isAuthenticatedUser()) {
+    return openGuestRestrictionModal(userSettings.language === "Russian" ? "Лента" : "Feed");
+  }
+  const profile = currentUserProfileData();
+  const modal = createSettingsModal(translatePhrase("Share experience"), `
+    <p class="settings-modal-text">${translatePhrase("Tell the community about a place or moment in Dalat.")}</p>
+    <form class="request-sheet-form" data-feed-compose-form>
+      <label><span>${isRussianLanguage() ? "Место" : "Place"}</span><input name="place" placeholder="Pine Brew Cafe" /></label>
+      <label><span>${isRussianLanguage() ? "Ваш опыт" : "Your experience"}</span><textarea name="text" rows="4" required placeholder="${isRussianLanguage() ? "Что вам понравилось?" : "What did you discover?"}"></textarea></label>
+      <button class="gold-button full-width" type="submit">${translatePhrase("Share")}</button>
+    </form>
+  `, { panelClass: "request-sheet-panel" });
+  modal.querySelector("[data-feed-compose-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const author = profile.fullName || data.user?.name || "ANIMA Guest";
+    const newPost = {
+      id: `feed-user-${Date.now()}`,
+      feedTab: "Forum",
+      type: "community",
+      label: "Forum",
+      title: String(payload.place || "").trim() || (isRussianLanguage() ? "Мой опыт в Далате" : "My Dalat moment"),
+      author,
+      badge: isRussianLanguage() ? "Участник" : "Member",
+      time: isRussianLanguage() ? "сейчас" : "now",
+      location: "Dalat",
+      place: String(payload.place || "").trim(),
+      text: String(payload.text || "").trim(),
+      likeCount: 0,
+      commentCount: 0,
+    };
+    data.feed = [newPost, ...(data.feed || [])];
+    modal.remove();
+    if (currentScreen === "feed") {
+      const list = screenView.querySelector("[data-feed-list]");
+      if (list) list.innerHTML = renderFilteredFeed(feedFilters.tab);
+    }
+    openInfoModal(
+      isRussianLanguage() ? "Опубликовано" : "Shared",
+      isRussianLanguage() ? "Ваш пост появился в ленте." : "Your post is now in the feed.",
+    );
+  });
+}
+
+function bindFeedActions() {
+  const root = screenView.querySelector(".feed-threads");
+  if (!root) return;
+  if (root.dataset.feedBound === "1") return;
+  root.dataset.feedBound = "1";
+
+  root.addEventListener("click", (event) => {
+    const filterButton = event.target.closest("[data-feed-filter]");
+    if (filterButton) {
+      feedFilters.tab = filterButton.dataset.feedFilter || "Today";
+      root.querySelectorAll("[data-feed-filter]").forEach((item) => item.classList.remove("active"));
+      filterButton.classList.add("active");
+      const list = root.querySelector("[data-feed-list]");
+      if (list) list.innerHTML = renderFilteredFeed(feedFilters.tab);
+      return;
+    }
+    if (event.target.closest("[data-feed-marketplace-auth]")) {
+      openGuestRestrictionModal(userSettings.language === "Russian" ? "Объявления" : "Classifieds");
+      return;
+    }
+    if (event.target.closest("[data-feed-marketplace-compose]")) {
+      openMarketplaceComposeModal();
+      return;
+    }
+    if (event.target.closest("[data-feed-compose]")) {
+      if (!isAuthenticatedUser()) {
+        openGuestRestrictionModal(userSettings.language === "Russian" ? "Лента" : "Feed");
+        return;
+      }
+      openFeedComposeModal();
+      return;
+    }
+    const marketplaceCardEl = event.target.closest("[data-marketplace-id]");
+    if (marketplaceCardEl) {
+      const item = getMarketplaceItems().find((entry) => String(entry.id) === marketplaceCardEl.dataset.marketplaceId);
+      if (!item) return;
+      if (event.target.closest("[data-marketplace-contact]")) {
+        openActionModal(
+          translatePhrase("Contact seller"),
+          `${item.author}: ${item.contact || managerTelegram.handle}`,
+        );
+        return;
+      }
+      if (event.target.closest("[data-marketplace-share]")) {
+        openActionModal(
+          translatePhrase("Share"),
+          isRussianLanguage()
+            ? `Поделиться: «${item.title}» за ${item.price}.`
+            : `Share “${item.title}” for ${item.price}.`,
+        );
+        return;
+      }
+      return;
+    }
+    const card = event.target.closest("[data-feed-id]");
+    if (!card) return;
+    const item = getFeedItems().find((entry) => feedItemKey(entry) === card.dataset.feedId);
+    if (!item) return;
+
+    if (event.target.closest("[data-feed-like]")) {
+      const key = feedItemKey(item);
+      const button = card.querySelector("[data-feed-like]");
+      if (feedLikes.has(key)) feedLikes.delete(key);
+      else feedLikes.add(key);
+      persistFeedLikes();
+      const liked = feedLikes.has(key);
+      const likes = feedDisplayLikes(item) + (liked ? 1 : 0);
+      button.classList.toggle("is-liked", liked);
+      button.setAttribute("aria-pressed", liked ? "true" : "false");
+      button.innerHTML = `<span aria-hidden="true">${liked ? "♥" : "♡"}</span> ${translatePhrase("Like")} · ${likes}`;
+      return;
+    }
+    if (event.target.closest("[data-feed-comment]")) {
+      openFeedCommentModal(item);
+      return;
+    }
+    if (event.target.closest("[data-feed-share]")) {
+      openActionModal(
+        translatePhrase("Share"),
+        isRussianLanguage()
+          ? `Поделиться: «${item.title}». В полной версии откроется системное меню Share.`
+          : `Share “${item.title}”. In the full app this opens the native share sheet.`,
+      );
+    }
+  });
 }
 
 function renderCommunity(config) {
@@ -4192,27 +4989,21 @@ function renderStayListings() {
 }
 
 function stayCard(stay) {
-  const ratingText = [stay.rating ? `★ ${stay.rating}` : "", stay.reviews ? `(${stay.reviews})` : "", stay.source ? `· ${stay.source}` : ""].filter(Boolean).join(" ");
-  const locationText = [localizeStayPlaceText(stay.location), localizeStayPlaceText(stay.distance)].filter(Boolean).join(" · ");
-  const capacityText = stayCapacityText(stay);
+  const ratingText = stay.rating ? `★ ${stay.rating}` : "";
   const stayKey = escapeAttr(detailKey(stay));
-  const staySlug = escapeAttr(stay.slug || slugify(stay.title));
+  const image = resolveMediaUrl(stay.image);
   return `
-    <article class="stay-card" data-detail="${stayKey}">
-      <img src="${stay.image}" alt="" />
+    <article class="stay-card stay-card-premium" data-detail="${stayKey}">
+      <img src="${image}" alt="" loading="lazy" />
       <div class="stay-info">
         <div class="stay-topline">
           <p>${localizeStayType(stay.type || stay.category)}</p>
           <span class="verified-anima">${verifiedAnimaLabel()}</span>
-        <button class="save-button inline ${isSavedTitle(stay.title) ? "saved" : ""}" type="button" aria-label="Save ${stay.title}" ${saveAttrs(stay, "Stay")}>♡</button>
         </div>
         <h2>${stay.title}</h2>
         ${ratingText ? `<span class="stay-rating">${ratingText}</span>` : ""}
-        ${locationText || capacityText ? `<span class="stay-location">${locationText ? `⌖ ${locationText}` : ""}${locationText && capacityText ? "<br />" : ""}${capacityText}</span>` : ""}
-        <div class="place-tags">${(stay.tags || []).slice(0, 3).map((tag) => `<span>${tag}</span>`).join("")}</div>
         <div class="stay-bottom">
           <strong>${stayPriceText(stay)}</strong>
-          <span class="stay-card-open-hint">${isRussianLanguage() ? "Нажмите карточку" : "Tap card"}</span>
         </div>
       </div>
     </article>
@@ -4220,120 +5011,46 @@ function stayCard(stay) {
 }
 
 function renderStayDetail(stay) {
-  const nightlyRate = parsePriceNumber(stay.price);
-  const defaultNights = Number(stay.nights) || 1;
-  const subtotal = nightlyRate * defaultNights;
-  const cleaning = parsePriceNumber(stay.cleaningFee);
-  const service = parsePriceNumber(stay.serviceFee);
-  const total = subtotal + cleaning + service;
-  const config = { title: stay.title, subtitle: `${localizeStayType(stay.type || stay.category)} · ${localizeStayPlaceText(stay.location)}` };
-  const ratingText = [stay.rating ? `★ ${stay.rating}` : "", stay.reviews ? `(${stay.reviews})` : "", stay.source ? `· ${stay.source}` : ""].filter(Boolean).join(" ");
-  const facts = [
-    [stay.guests, "Guests"],
-    [stay.bedrooms, "Bedrooms"],
-    [stay.beds, "Beds"],
-    [stay.baths, "Baths"],
-    [stay.size, "Size"],
-  ].filter(([value]) => value);
+  const mapsUrl = stay.mapsUrl || stay.sourceUrl || "https://maps.google.com";
+  const ratingText = [stay.rating ? `★ ${stay.rating}` : "", stay.reviews ? `(${stay.reviews})` : ""].filter(Boolean).join(" ");
+  const gallery = stayGallery(stay);
+  const metaParts = [
+    stay.guests ? `${stay.guests} ${stayCopy("guests", "гостей", "khách")}` : "",
+    stay.bedrooms ? `${stay.bedrooms} ${stayCopy("bedrooms", "спален", "phòng ngủ")}` : "",
+    stay.size || "",
+  ].filter(Boolean);
   return `
-    <div class="screen-inner stay-detail-screen">
-      ${renderHeader(config, { back: true })}
-      <section class="stay-hero-detail">
-        <img src="${stay.image}" alt="" />
-        <button class="save-button" type="button" aria-label="Save ${stay.title}">♡</button>
-        <div class="stay-share">↥</div>
-        <span class="gallery-count">1 / ${stay.gallery?.length || 1}</span>
-        <div>
-          <h2>${stay.title}</h2>
-          <p>${localizeStayType(stay.type || stay.category)} · ${localizeStayPlaceText(stay.location)}</p>
-          ${ratingText ? `<span>${ratingText}</span>` : ""}
-          <em class="verified-anima detail">${verifiedAnimaLabel()}</em>
+    <div class="screen-inner stay-detail-screen stay-detail-premium">
+      <header class="stay-detail-bar">
+        <button class="back-button" type="button" data-back aria-label="${stayCopy("Back", "Назад", "Quay lại")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+      </header>
+
+      ${renderStayGalleryGrid(gallery)}
+
+      <section class="stay-detail-main">
+        <div class="stay-detail-kicker">
+          <span>${localizeStayType(stay.type || stay.category)}</span>
+          <span class="verified-anima">${verifiedAnimaLabel()}</span>
         </div>
+        <h1>${stay.title}</h1>
+        ${ratingText ? `<p class="stay-detail-rating">${ratingText}</p>` : ""}
+        <p class="stay-detail-price">${formatPriceMap(stay.priceMap, stay.price)} <span>${localizePriceType(stay.priceType)}</span></p>
+        <p class="stay-detail-about">${stay.description}</p>
+        ${metaParts.length ? `<p class="stay-detail-meta">${metaParts.join(" · ")}</p>` : ""}
+        <a class="stay-maps-link" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">Google Maps</a>
       </section>
 
-      ${facts.length ? `<section class="stay-facts">${facts.map(([value, label]) => `<article><strong>${value}</strong><span>${stayFactLabel(label)}</span></article>`).join("")}</section>` : ""}
-
-      <section class="stay-gallery-strip">
-        ${(stay.gallery || [stay.image]).map((image, index) => `<img src="${image}" alt="" />${index === 2 ? "<span>+20</span>" : ""}`).join("")}
-      </section>
-
-      <article class="stay-detail-card">
-        <h2>${isRussianLanguage() ? "Об этом месте" : "About this place"}</h2>
-        <p>${stay.description}</p>
-        <div class="vibe-tags">${(stay.tags || []).slice(0, 8).map((tag) => `<span>${tag}</span>`).join("")}</div>
-        ${stay.highlights?.length ? `<div class="detail-highlights">${stay.highlights.map((item) => `<span>${item}</span>`).join("")}</div>` : ""}
-        <a href="#">${isRussianLanguage() ? "Читать дальше" : "Read more"}⌄</a>
-      </article>
-
-      <article class="stay-detail-card stay-location-card">
-        <div>
-          <h2>${isRussianLanguage() ? "Локация" : "Location"}</h2>
-          <p>⌖ ${localizeStayPlaceText(stay.location)}, ${isRussianLanguage() ? "Далат" : "Dalat"}</p>
-          <span>${localizeStayPlaceText(stay.distance)} · ${isRussianLanguage() ? "7 мин до Tuyen Lam Lake" : "7 min to Tuyen Lam Lake"}</span>
-          <div class="detail-action-row">
-            <button class="mini-icon-button" type="button" ${actionAttrs(`Share ${stay.title}`, "Share stay card will use the native share sheet in the app build.")}>↥</button>
-            <button class="mini-icon-button" type="button" ${actionAttrs(`Directions: ${stay.title}`, "Directions will open through maps in the app build.")}>⌖</button>
-          </div>
-          <a class="gold-button location-button" href="${stay.mapsUrl || stay.sourceUrl || "https://maps.google.com"}" target="_blank" rel="noopener">${isRussianLanguage() ? "Открыть в Google Maps" : "Open in Google Maps"}</a>
+      <div class="stay-book-cta stay-detail-book-bar" data-stay-book-bar>
+        <div class="stay-book-cta-copy stay-detail-book-price">
+          <strong>${formatPriceMap(stay.priceMap, stay.price)}</strong>
+          <span>${localizePriceType(stay.priceType)}</span>
         </div>
-        <div class="mini-map-pin">●</div>
-      </article>
-
-      <section class="stay-booking-panel">
-        <h2>${isRussianLanguage() ? "Бронирование" : "Booking"}</h2>
-        <div class="rate-grid">
-          <article class="active"><span>${isRussianLanguage() ? "Цена за ночь" : "Nightly rate"}</span><small>${isRussianLanguage() ? "От" : "From"}</small><strong>${formatPriceMap(stay.priceMap, stay.price)}</strong><em>${localizePriceType(stay.priceType)}</em></article>
-          ${stay.monthlyPrice ? `<article><span>${isRussianLanguage() ? "Цена за месяц" : "Monthly rate"}</span><small>${isRussianLanguage() ? "От" : "From"}</small><strong>${formatPriceMap(stay.monthlyPriceMap, stay.monthlyPrice)}</strong><em>${localizePriceType("/ month")}</em></article>` : ""}
-        </div>
-        <form class="booking-form" data-booking-form="${escapeAttr(stay.title)}" data-nightly-rate="${nightlyRate}" data-cleaning-fee="${cleaning}" data-service-fee="${service}">
-          <div class="booking-form-grid">
-            <label><span>${isRussianLanguage() ? "Заезд" : "Check-in"}</span><input name="checkin" type="date" required /></label>
-            <label><span>${isRussianLanguage() ? "Выезд" : "Check-out"}</span><input name="checkout" type="date" required /></label>
-            <label><span>${isRussianLanguage() ? "Гостей" : "Guests"}</span><input name="guests" type="number" min="1" value="${stay.guests || 1}" required /></label>
-            <label><span>${isRussianLanguage() ? "Номер телефона" : "Phone"}</span><input name="phone" type="tel" placeholder="+7 ..." required /></label>
-            <label class="full"><span>${isRussianLanguage() ? "ФИО" : "Full name"}</span><input name="fullName" type="text" required /></label>
-            <label><span>${isRussianLanguage() ? "Дата рождения" : "Birth date"}</span><input name="birthDate" type="date" required /></label>
-            <label><span>${isRussianLanguage() ? "Номер паспорта" : "Passport number"}</span><input name="passportNumber" type="text" required /></label>
-            <label class="full"><span>${isRussianLanguage() ? "Почта" : "Email"}</span><input name="email" type="email" placeholder="name@email.com" required /></label>
-            <label class="full"><span>${isRussianLanguage() ? "Комментарий к брони" : "Booking note"}</span><textarea name="note" placeholder="${isRussianLanguage() ? "Пожелания по номеру, поздний заезд и т.д." : "Special requests, late arrival, etc."}"></textarea></label>
-          </div>
-          <div class="booking-summary" data-booking-summary>
-            <div><span>${isRussianLanguage() ? "Ночей" : "Nights"}</span><b>${defaultNights}</b></div>
-            <div><span>${isRussianLanguage() ? "Проживание" : "Stay"}</span><b>${formatMoney(subtotal, userSettings.currency)}</b></div>
-            ${cleaning ? `<div><span>${isRussianLanguage() ? "Уборка" : "Cleaning fee"}</span><b>${formatPriceMap(stay.cleaningFeeMap, stay.cleaningFee)}</b></div>` : ""}
-            ${service ? `<div><span>${isRussianLanguage() ? "Сервисный сбор" : "Service fee"}</span><b>${formatPriceMap(stay.serviceFeeMap, stay.serviceFee)}</b></div>` : ""}
-            <strong><span>${isRussianLanguage() ? "Итого" : "Total"}</span><b>${formatMoney(total, userSettings.currency)}</b></strong>
-          </div>
-          <button class="gold-button booking-submit" type="submit">${isRussianLanguage() ? "Бронь" : "Book now"}</button>
-        </form>
-      </section>
-
-      <section class="stay-detail-card price-details">
-        <h2>${isRussianLanguage() ? "Детали цены" : "Price details"}</h2>
-        <div><span>${formatPriceMap(stay.priceMap, stay.price)} × ${stay.nights} ${isRussianLanguage() ? pluralRu(stay.nights, ["ночь", "ночи", "ночей"]) : "nights"}</span><b>${formatMoney(subtotal, userSettings.currency)}</b></div>
-        ${stay.cleaningFee ? `<div><span>${isRussianLanguage() ? "Уборка" : "Cleaning fee"}</span><b>${formatPriceMap(stay.cleaningFeeMap, stay.cleaningFee)}</b></div>` : ""}
-        ${stay.serviceFee ? `<div><span>${isRussianLanguage() ? "Сервисный сбор" : "Service fee"}</span><b>${formatPriceMap(stay.serviceFeeMap, stay.serviceFee)}</b></div>` : ""}
-        <strong><span>${isRussianLanguage() ? "Итого" : "Total"} (${stay.nights} ${isRussianLanguage() ? pluralRu(stay.nights, ["ночь", "ночи", "ночей"]) : "nights"})</span><b>${formatMoney(total, userSettings.currency)}</b></strong>
-      </section>
-
-      <article class="stay-detail-card">
-        <h2>${isRussianLanguage() ? "Депозит и оплата" : "Deposit & Payment"}</h2>
-        <p>${stay.deposit ? (isRussianLanguage() ? `Возвратный депозит: ${formatPriceMap(stay.depositMap, stay.deposit)}. Депозит возвращается в течение 24-48 часов после выезда, если нет повреждений.` : `Security deposit (refundable): ${formatPriceMap(stay.depositMap, stay.deposit)}. The deposit will be refunded within 24-48 hours after check-out if there is no damage.`) : (isRussianLanguage() ? "Депозит не указан." : "Deposit is not specified.")}</p>
-        <p>${isRussianLanguage() ? "Полная оплата нужна для подтверждения бронирования." : "Full payment required to confirm booking."}</p>
-      </article>
-
-      <section class="stay-detail-card house-rules">
-        <h2>${isRussianLanguage() ? "Правила проживания" : "House rules"}</h2>
-        ${stay.rules.map((rule) => `<div><span>⌁</span><p>${rule}</p><b>›</b></div>`).join("")}
-      </section>
-
-      <section class="stay-detail-card amenities-card">
-        <h2>${isRussianLanguage() ? "Удобства" : "Amenities"}</h2>
-        <div>${stay.amenities.map((item) => `<span>${item}</span>`).join("")}</div>
-      </section>
-
-      ${renderReviewSection(stay)}
-
+        <button class="gold-button stay-book-cta-button stay-detail-book-cta" type="button" data-stay-book-open data-open-stay-booking="${escapeAttr(stay.title)}">
+          ${stayCopy("Book", "Забронировать", "Đặt phòng")}
+        </button>
+      </div>
     </div>
   `;
 }
@@ -4493,7 +5210,7 @@ function renderProfileRewardsCard(progress, remaining) {
         <img src="./assets/anima-points-coin.png" alt="" />
       </div>
       <div class="reward-copy">
-        <h2>You earn with ANIMA <span aria-hidden="true">✦</span></h2>
+        <h2>You earn with ANIMA <img class="inline-points-coin" src="./assets/anima-points-coin.png" alt="" aria-hidden="true" /></h2>
         <p>Use ANIMA Points and get amazing rewards.</p>
         <a class="cream-button" href="#">
           <span>View rewards</span>
@@ -4713,13 +5430,12 @@ function renderPartners(config) {
   return `
     <div class="screen-inner partners-screen">
       ${renderHeader(config, { back: true })}
-      <section class="partners-intro-card">
-        <p class="brand-kicker">${ru ? "Наши партнёры" : "Our partners"}</p>
-        <h2>${ru ? "Только реальные партнёры из вашей базы." : "Only real partners from your database."}</h2>
-        <p>${ru ? "Без демо-кафе и тестовых мест. Здесь показываются только подключённые бизнесы." : "No demo cafes or placeholder locations. Only connected businesses are shown here."}</p>
+      <section class="clean-section-card compact">
+        <p>${ru ? "Проверенные места и партнёры ANIMA в Далате." : "Trusted ANIMA places and partners in Dalat."}</p>
+        <button class="text-link-button" type="button" data-screen="for-business">${ru ? "Стать партнёром ANIMA →" : "Become an ANIMA Partner →"}</button>
       </section>
       <section class="partner-list">
-        ${data.partners.map((partner) => `
+        ${data.partners.length ? data.partners.map((partner) => `
           <article class="partner-card" style="--partner-img: url('${partner.image}')">
             <div class="partner-logo">${partner.name.split(" ").map((word) => word[0]).slice(0, 2).join("")}</div>
             <div>
@@ -4727,11 +5443,9 @@ function renderPartners(config) {
               <h3>${partner.name}</h3>
               <span>${partner.description}</span>
               <small>${partner.location}</small>
-              <div class="tag-row">${partner.tags.map((tag) => `<em>${tag}</em>`).join("")}</div>
             </div>
-            <a class="mini-cta" href="#" ${actionAttrs(`Partner: ${partner.name}`, `Open partner contact request for ${partner.name}.`)}>View partner</a>
           </article>
-        `).join("")}
+        `).join("") : `<article class="empty-state"><h3>${ru ? "Партнёры скоро появятся" : "Partners coming soon"}</h3></article>`}
       </section>
     </div>
   `;
@@ -4947,6 +5661,7 @@ function bindScreenActions() {
     });
   });
   bindStoreActions();
+  bindFeedActions();
   screenView.querySelectorAll("[data-profile-action]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
@@ -4989,21 +5704,51 @@ function bindScreenActions() {
       event.preventDefault();
       if (form.hasAttribute("data-booking-form") || form.hasAttribute("data-partner-application-form")) return;
       if (form.classList.contains("exchange-form")) {
+        const formData = Object.fromEntries(new FormData(form).entries());
+        submitUserRequest({
+          subject: "ANIMA Exchange request",
+          name: formData.name || currentUserProfileData().fullName || data.user?.name || "",
+          contact: formData.contact || "",
+          comment: `From ${formData.fromCurrency || ""} to ${formData.toCurrency || ""}, amount ${formData.amount || ""}, fee ${formData.fee || ""}, receive ${formData.receive || ""}`,
+          contactMethod: formData.contactMethod || "Telegram",
+        });
         form.hidden = true;
-        form.nextElementSibling.hidden = false;
+        const success = form.nextElementSibling;
+        if (success) success.hidden = false;
+        return;
       }
     });
   });
   bindBookingForms();
   bindBusinessForms();
+  bindStayGalleryGrid();
+  bindStayBookAction();
 }
 
 function bindActionTriggers(root) {
+  root.querySelectorAll("[data-request-open]").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      openRequestModal({
+        title: item.dataset.requestSubject || (isRussianLanguage() ? "Отправить заявку" : "Submit request"),
+        subject: item.dataset.requestSubject || item.textContent.trim(),
+        cta: item.dataset.requestCta || (isRussianLanguage() ? "Отправить" : "Submit"),
+      });
+    });
+  });
   root.querySelectorAll("[data-action-title]").forEach((item) => {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      registerActionOrder(item.dataset.actionTitle);
-      openActionModal(item.dataset.actionTitle, item.dataset.actionMessage);
+      if (item.dataset.actionMessage && !item.dataset.requestForce) {
+        registerActionOrder(item.dataset.actionTitle);
+        openActionModal(item.dataset.actionTitle, item.dataset.actionMessage);
+        return;
+      }
+      openRequestModal({
+        title: item.dataset.actionTitle || (isRussianLanguage() ? "Заявка" : "Request"),
+        subject: item.dataset.actionTitle || "",
+        cta: item.dataset.actionCta || (isRussianLanguage() ? "Отправить" : "Submit"),
+      });
     });
   });
   root.querySelectorAll("[data-booking-contact]").forEach((item) => {
@@ -5047,8 +5792,8 @@ function currentUserProfileData() {
   };
 }
 
-function bindBookingForms() {
-  screenView.querySelectorAll("[data-booking-form]").forEach((form) => {
+function bindBookingForms(root = screenView) {
+  root.querySelectorAll("[data-booking-form]").forEach((form) => {
     const profile = currentUserProfileData();
     const fullNameInput = form.querySelector('[name="fullName"]');
     const birthDateInput = form.querySelector('[name="birthDate"]');
@@ -5105,12 +5850,13 @@ function bindBookingForms() {
         }, baseData);
       }
       refreshNotificationDot();
-      openInfoModal(
-        isRussianLanguage() ? "Бронь отправлена" : "Booking sent",
-        isRussianLanguage()
-          ? `Запрос на бронирование ${form.dataset.bookingForm} отправлен. Итоговая сумма: ${formatMoney(booking.totalVnd, userSettings.currency)}. Следите за уведомлениями в приложении или на почте: после ответа отеля мы покажем следующий шаг для подтверждения.`
-          : `Your booking request for ${form.dataset.bookingForm} was sent. Total: ${formatMoney(booking.totalVnd, userSettings.currency)}. Watch app notifications or email for the next approval step.`
-      );
+      const bookingModal = form.closest(".settings-modal");
+      if (bookingModal) dismissSettingsModal(bookingModal);
+      openStayPaymentModal({
+        stayTitle: form.dataset.bookingForm,
+        totalLabel: formatMoney(booking.totalVnd, userSettings.currency),
+        bookingId: createdOrder?.id || "",
+      });
     });
   });
 }
@@ -5167,15 +5913,8 @@ function refreshBookingSummary(form) {
   const summary = form.querySelector("[data-booking-summary]");
   if (!summary) return;
   const booking = bookingTotals(form);
-  const cleaningFee = Number(form.dataset.cleaningFee || 0);
-  const serviceFee = Number(form.dataset.serviceFee || 0);
-  summary.innerHTML = `
-    <div><span>${isRussianLanguage() ? "Ночей" : "Nights"}</span><b>${booking.nights}</b></div>
-    <div><span>${isRussianLanguage() ? "Проживание" : "Stay"}</span><b>${formatMoney(booking.subtotal, userSettings.currency)}</b></div>
-    ${cleaningFee ? `<div><span>${isRussianLanguage() ? "Уборка" : "Cleaning fee"}</span><b>${formatMoney(cleaningFee, userSettings.currency)}</b></div>` : ""}
-    ${serviceFee ? `<div><span>${isRussianLanguage() ? "Сервисный сбор" : "Service fee"}</span><b>${formatMoney(serviceFee, userSettings.currency)}</b></div>` : ""}
-    <strong><span>${isRussianLanguage() ? "Итого" : "Total"}</span><b>${formatMoney(booking.totalVnd, userSettings.currency)}</b></strong>
-  `;
+  const total = summary.querySelector("strong");
+  if (total) total.textContent = formatMoney(booking.totalVnd, userSettings.currency);
 }
 
 function bindStoreActions() {
@@ -5430,8 +6169,167 @@ function openNotificationModal() {
   openUserNotifications();
 }
 
+function openStayPaymentModal({ stayTitle, totalLabel, bookingId }) {
+  const modal = createSettingsModal(stayCopy("Complete payment", "Оплата", "Thanh toán"), `
+    <p class="settings-modal-text">${stayCopy("Booking confirmed for", "Бронь подтверждена для", "Đặt phòng cho")} <strong>${stayTitle}</strong></p>
+    <p class="settings-modal-text stay-payment-total">${totalLabel}</p>
+    <div class="guest-gate-actions stay-payment-actions">
+      <button class="gold-button" type="button" data-stay-pay="card">${stayCopy("Pay now", "Оплатить сейчас", "Thanh toán ngay")}</button>
+      <button class="secondary-button" type="button" data-stay-pay="hotel">${stayCopy("Pay at hotel", "Оплатить в отеле", "Thanh toán tại khách sạn")}</button>
+    </div>
+  `, { centered: true, panelClass: "stay-payment-modal" });
+  modal.querySelector('[data-stay-pay="card"]')?.addEventListener("click", () => {
+    if (bookingId && window.ANIMA_DB?.recordPayment) {
+      window.ANIMA_DB.recordPayment(bookingId, {
+        actorUserId: currentAuthUser?.id || "",
+        status: "paid",
+        method: "card",
+        provider: "ANIMA checkout",
+      }, baseData);
+    }
+    modal.remove();
+    openInfoModal(
+      stayCopy("Payment complete", "Оплата прошла", "Thanh toán thành công"),
+      stayCopy("Your stay is booked and paid through ANIMA.", "Проживание забронировано и оплачено через ANIMA.", "Đặt phòng và thanh toán qua ANIMA thành công.")
+    );
+  });
+  modal.querySelector('[data-stay-pay="hotel"]')?.addEventListener("click", () => {
+    if (bookingId && window.ANIMA_DB?.recordPayment) {
+      window.ANIMA_DB.recordPayment(bookingId, {
+        actorUserId: currentAuthUser?.id || "",
+        status: "pending",
+        method: "cash_at_hotel",
+        provider: "ANIMA checkout",
+      }, baseData);
+    }
+    modal.remove();
+    openInfoModal(
+      stayCopy("Booking reserved", "Бронь оформлена", "Đã đặt phòng"),
+      stayCopy("Pay the remaining amount at check-in.", "Остаток оплатите при заселении.", "Thanh toán phần còn lại khi nhận phòng.")
+    );
+  });
+}
+
 function openInfoModal(title, text) {
   createSettingsModal(title, `<p class="settings-modal-text">${text}</p><button class="gold-button modal-close-button" type="button">Done</button>`);
+}
+
+function animaPointsGuideStep(number, text) {
+  return `
+    <li class="points-guide-step">
+      <span class="points-guide-step-num">${number}</span>
+      <span>${text}</span>
+    </li>
+  `;
+}
+
+function animaPointsGuideList(items) {
+  return `<ul class="points-guide-list">${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+}
+
+function openAnimaPointsGuideModal() {
+  const modal = createSettingsModal(t("points.guide.title"), `
+    <div class="points-guide-modal">
+      <div class="points-guide-hero">
+        <img src="./assets/anima-points-coin.png" alt="" aria-hidden="true" />
+        <p class="settings-modal-text">${t("points.guide.intro")}</p>
+      </div>
+      <section class="points-guide-section">
+        <h3>${t("points.guide.earnTitle")}</h3>
+        ${animaPointsGuideList([
+          t("points.guide.earn1"),
+          t("points.guide.earn2"),
+          t("points.guide.earn3"),
+          t("points.guide.earn4"),
+        ])}
+      </section>
+      <section class="points-guide-section">
+        <h3>${t("points.guide.useTitle")}</h3>
+        ${animaPointsGuideList([
+          t("points.guide.use1"),
+          t("points.guide.use2"),
+          t("points.guide.use3"),
+        ])}
+      </section>
+      <section class="points-guide-section">
+        <h3>${t("points.guide.stepsTitle")}</h3>
+        <ol class="points-guide-steps">
+          ${animaPointsGuideStep(1, t("points.guide.step1"))}
+          ${animaPointsGuideStep(2, t("points.guide.step2"))}
+          ${animaPointsGuideStep(3, t("points.guide.step3"))}
+          ${animaPointsGuideStep(4, t("points.guide.step4"))}
+        </ol>
+      </section>
+      <button class="gold-button full-width" type="button" data-open-rewards-center>${t("points.guide.openRewards")}</button>
+      <button class="gold-button modal-close-button full-width" type="button">${translatePhrase("Done")}</button>
+    </div>
+  `, { panelClass: "points-guide-panel", centered: true, phoneOverlay: true });
+  modal.querySelector("[data-open-rewards-center]")?.addEventListener("click", () => {
+    dismissSettingsModal(modal);
+    navigateTo("rewards");
+  });
+}
+
+function openRequestModal(options = {}) {
+  const ru = isRussianLanguage();
+  const profile = currentUserProfileData();
+  const title = options.title || (ru ? "Отправить заявку" : "Submit request");
+  const subject = options.subject || title;
+  const cta = options.cta || (ru ? "Отправить" : "Submit");
+  const modal = createSettingsModal(title, `
+    <form class="request-sheet-form" data-request-form>
+      <label><span>${ru ? "Имя" : "Name"}</span><input name="name" required value="${escapeAttr(profile.fullName || data.user?.name || "")}" /></label>
+      <label><span>${ru ? "Контакт" : "Contact"}</span><input name="contact" required placeholder="Telegram / WhatsApp / Email" value="${escapeAttr(profile.phone || profile.email || "")}" /></label>
+      <label><span>${ru ? "Дата" : "Date"}</span><input name="date" type="date" /></label>
+      <label><span>${ru ? "Время" : "Time"}</span><input name="time" type="time" /></label>
+      <label><span>${ru ? "Комментарий" : "Comment"}</span><textarea name="comment" rows="3" placeholder="${escapeAttr(subject)}"></textarea></label>
+      <label><span>${ru ? "Способ связи" : "Contact method"}</span>
+        <select name="contactMethod">
+          <option>Telegram</option>
+          <option>WhatsApp</option>
+          <option>Email</option>
+          <option>Phone</option>
+        </select>
+      </label>
+      <input type="hidden" name="subject" value="${escapeAttr(subject)}" />
+      <button class="gold-button full-width" type="submit">${cta}</button>
+    </form>
+  `, { panelClass: "request-sheet-panel" });
+  modal.querySelector("[data-request-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const payload = Object.fromEntries(new FormData(form).entries());
+    submitUserRequest(payload);
+    modal.remove();
+    openRequestSuccessModal();
+  });
+}
+
+function submitUserRequest(payload = {}) {
+  const title = payload.subject || payload.comment || "ANIMA request";
+  registerActionOrder(title);
+  if (window.ANIMA_DB?.addOrder) {
+    window.ANIMA_DB.addOrder({
+      title,
+      source: currentScreen,
+      client: payload.name || data.user?.name || "ANIMA User",
+      contact: payload.contact || "",
+      comment: payload.comment || "",
+      date: payload.date || "",
+      time: payload.time || "",
+      contactMethod: payload.contactMethod || "Telegram",
+    }, baseData);
+  }
+}
+
+function openRequestSuccessModal() {
+  const ru = isRussianLanguage();
+  createSettingsModal(ru ? "Заявка отправлена" : "Request sent", `
+    <p class="settings-modal-text">${ru
+      ? "Ваша заявка отправлена. ANIMA или партнёр свяжется с вами в ближайшее время."
+      : "Your request has been sent. ANIMA or the partner will contact you soon."}</p>
+    <button class="gold-button modal-close-button full-width" type="button">${ru ? "Готово" : "Done"}</button>
+  `, { panelClass: "request-sheet-panel" });
 }
 
 function openActionModal(title, text) {
@@ -5446,11 +6344,26 @@ function openActionModal(title, text) {
   `);
 }
 
+function dismissSettingsModal(modal) {
+  modal?.remove();
+  if (!document.querySelector(".settings-modal")) {
+    document.body.classList.remove("settings-modal-open");
+    phoneShell?.classList.remove("modal-open");
+  }
+}
+
 function createSettingsModal(title, body, options = {}) {
-  const modalRoot = screenView.hidden ? phoneShell : screenView;
+  const onHome = Boolean(screenView?.hidden && phoneShell);
+  const phoneOverlay = options.phoneOverlay ?? onHome;
+  const modalRoot = phoneOverlay ? document.body : (screenView.hidden ? phoneShell : screenView);
   modalRoot.querySelector(".settings-modal")?.remove();
+  const centered = options.centered ?? phoneOverlay;
   const modal = document.createElement("div");
-  modal.className = `settings-modal ${options.centered ? "centered" : ""}`.trim();
+  modal.className = [
+    "settings-modal",
+    centered ? "centered" : "",
+    phoneOverlay ? "settings-modal-phone" : "",
+  ].filter(Boolean).join(" ");
   modal.innerHTML = `
     <div class="settings-modal-backdrop" data-close-modal></div>
     <section class="settings-modal-panel ${options.panelClass || ""}">
@@ -5459,11 +6372,15 @@ function createSettingsModal(title, body, options = {}) {
     </section>
   `;
   modalRoot.appendChild(modal);
+  if (phoneOverlay) {
+    document.body.classList.add("settings-modal-open");
+    phoneShell?.classList.add("modal-open");
+  }
   modal.querySelectorAll("[data-close-modal], .modal-close-button").forEach((button) => {
-    button.addEventListener("click", () => modal.remove());
+    button.addEventListener("click", () => dismissSettingsModal(modal));
   });
   modal.querySelector("[data-guest-auth]")?.addEventListener("click", () => {
-    modal.remove();
+    dismissSettingsModal(modal);
     clearAuthSession();
     lockPin();
     showAuth("login", { error: "", pinBuffer: "", firstPin: "" });
@@ -5507,6 +6424,73 @@ function bindEatDynamicActions() {
   });
 }
 
+function bindStayGalleryGrid() {
+  const galleryRoot = screenView.querySelector("[data-stay-gallery-grid]");
+  if (!galleryRoot) return;
+
+  let images = [];
+  try {
+    images = JSON.parse(galleryRoot.dataset.stayGalleryImages || "[]");
+  } catch {
+    return;
+  }
+  if (!images.length) return;
+
+  const heroImg = galleryRoot.querySelector("[data-stay-gallery-main]");
+  const thumbs = [
+    ...galleryRoot.querySelectorAll(".stay-gallery-thumb[data-stay-gallery-thumb]"),
+    ...galleryRoot.querySelectorAll(".stay-gallery-mobile-thumb[data-stay-gallery-thumb]"),
+  ];
+  const counter = galleryRoot.querySelector("[data-stay-gallery-counter]");
+  const prev = galleryRoot.querySelector("[data-stay-gallery-prev]");
+  const next = galleryRoot.querySelector("[data-stay-gallery-next]");
+  if (!heroImg) return;
+
+  let activeIndex = 0;
+
+  const setActive = (index) => {
+    activeIndex = (index + images.length) % images.length;
+    heroImg.src = images[activeIndex];
+    thumbs.forEach((thumb) => {
+      const thumbIndex = Number(thumb.dataset.stayGalleryThumb);
+      const isActive = thumbIndex === activeIndex;
+      thumb.classList.toggle("active", isActive);
+      thumb.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+    if (counter) counter.textContent = `${activeIndex + 1} / ${images.length}`;
+  };
+
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener("click", () => setActive(Number(thumb.dataset.stayGalleryThumb)));
+  });
+  prev?.addEventListener("click", () => setActive(activeIndex - 1));
+  next?.addEventListener("click", () => setActive(activeIndex + 1));
+
+  let touchStartX = 0;
+  const hero = galleryRoot.querySelector("[data-stay-gallery-hero]");
+  hero?.addEventListener("touchstart", (event) => {
+    touchStartX = event.changedTouches[0]?.clientX || 0;
+  }, { passive: true });
+  hero?.addEventListener("touchend", (event) => {
+    const delta = (event.changedTouches[0]?.clientX || 0) - touchStartX;
+    if (Math.abs(delta) < 42) return;
+    setActive(activeIndex + (delta < 0 ? 1 : -1));
+  }, { passive: true });
+}
+
+function bindStayBookAction() {
+  screenView.querySelector("[data-stay-book-open]")?.addEventListener("click", (event) => {
+    const stayTitle = event.currentTarget.dataset.openStayBooking || event.currentTarget.dataset.stayTitle;
+    const stay = data.stays.find((item) => item.title === stayTitle) || data.stays.find((item) => detailKey(item) === stayTitle);
+    if (!stay) return;
+    if (!currentAuthUser) {
+      openGuestRestrictionModal(userSettings.language === "Russian" ? "Нужен вход" : "Sign in required");
+      return;
+    }
+    openStayBookingModal(stay);
+  });
+}
+
 function bindStayDynamicActions() {
   bindActionTriggers(screenView.querySelector(".stay-list") || screenView);
   screenView.querySelectorAll(".stay-list .save-button").forEach((button) => {
@@ -5534,19 +6518,18 @@ function bindStayDynamicActions() {
 function openHub() {
   phoneShell?.classList.add("hub-open");
   animaHub?.removeAttribute("hidden");
-  animaHub?.removeAttribute("inert");
   animaHub?.setAttribute("aria-hidden", "false");
   centerAction?.setAttribute("aria-expanded", "true");
   centerAction?.setAttribute("aria-label", "Close ANIMA Hub");
+  updateBottomNav(currentScreen);
 }
 
 function closeHub() {
   phoneShell?.classList.remove("hub-open");
-  animaHub?.setAttribute("hidden", "");
-  animaHub?.setAttribute("inert", "");
   animaHub?.setAttribute("aria-hidden", "true");
   centerAction?.setAttribute("aria-expanded", "false");
   centerAction?.setAttribute("aria-label", "Open ANIMA Hub");
+  updateBottomNav(currentScreen);
 }
 
 if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
