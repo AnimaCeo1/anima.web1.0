@@ -241,12 +241,28 @@ function loadStaticEntry(filePath) {
 function serveStatic(req, res, urlObj) {
   const startedAt = Date.now();
   let pathname = urlObj.pathname;
+  if (pathname === "/contact" || pathname === "/contact/") {
+    res.writeHead(308, { Location: "/contacts/", "Cache-Control": "no-cache" });
+    res.end();
+    return;
+  }
+  if (/^\/products\/[^/]+\/?$/.test(pathname) && pathname !== "/products/") {
+    pathname = "/products/detail.html";
+  }
+  if (/^\/journal\/[^/]+\/?$/.test(pathname) && pathname !== "/journal/") {
+    pathname = "/journal/article.html";
+  }
   if (/^\/[^/]+\/detail\/?$/.test(pathname)) {
     pathname = "/detail.html";
   }
   const filePath = safePath(pathname === "/" ? "/index.html" : pathname);
   if (!filePath.startsWith(ROOT)) return send(req, res, 403, "Forbidden");
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    const notFound = path.join(ROOT, "404.html");
+    if (fs.existsSync(notFound)) {
+      const entry = loadStaticEntry(notFound);
+      return send(req, res, 404, entry.buffer, entry.contentType, { "Cache-Control": "no-cache" });
+    }
     return send(req, res, 404, "Not Found");
   }
   const entry = loadStaticEntry(filePath);

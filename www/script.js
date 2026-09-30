@@ -4433,6 +4433,12 @@ function renderScreenExtra(screen) {
 
 function renderEcosystem(config) {
   const ru = isRussianLanguage();
+  const quickActions = [
+    { title: ru ? "Исследовать" : "Explore", hint: ru ? "Места и подборки" : "Places & picks", screen: "explore", icon: "explore" },
+    { title: ru ? "Карта" : "Map", hint: ru ? "Рядом и маршруты" : "Nearby routes", screen: "map", icon: "map" },
+    { title: ru ? "QR бонусы" : "QR Rewards", hint: ru ? "ANIMA Points" : "ANIMA Points", screen: "rewards", icon: "qr" },
+    { title: ru ? "Поддержка" : "Support", hint: ru ? "Связь с ANIMA" : "Contact ANIMA", screen: "contact", icon: "support" },
+  ];
   const cards = [
     {
       title: ru ? "Маркетплейс" : "Marketplace",
@@ -4493,12 +4499,23 @@ function renderEcosystem(config) {
     },
   ];
   const icons = {
+    explore: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m14 10-4 4"/><path d="m10 10 4 4"/></svg>`,
+    map: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>`,
+    qr: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 15h.01"/><path d="M15 15h.01"/><path d="M12 12h.01"/></svg>`,
+    support: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14a8 8 0 0 1 16 0"/><path d="M4 14v3a2 2 0 0 0 2 2h1v-7H6a2 2 0 0 0-2 2Z"/><path d="M20 14v3a2 2 0 0 1-2 2h-1v-7h1a2 2 0 0 1 2 2Z"/><path d="M12 20h3"/></svg>`,
     rewards: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
     marketplace: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
     digital: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="m10 13-2 2 2 2"/><path d="m14 13 2 2-2 2"/></svg>`,
     opportunities: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
     about: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/></svg>`,
   };
+  const quickAction = (item) => `
+    <button class="ecosystem-quick-action" type="button" data-screen="${item.screen}">
+      <span>${icons[item.icon]}</span>
+      <strong>${item.title}</strong>
+      <small>${item.hint}</small>
+    </button>
+  `;
   const card = (item) => `
     <button class="ecosystem-card ${item.wide ? "ecosystem-card-wide" : ""}" type="button" data-screen="${item.screen}"${item.feedTab ? ` data-feed-tab="${item.feedTab}"` : ""}>
       <span class="ecosystem-card-icon">${icons[item.icon]}</span>
@@ -4513,9 +4530,21 @@ function renderEcosystem(config) {
   return `
     <div class="screen-inner ecosystem-screen">
       ${renderHeader(config, { back: true })}
-      <p class="ecosystem-lead">${ru
-        ? "Центральный портал платформы. Сообщество и события — в ленте; быстрые карточки Jobs и For Business — на главном."
-        : "Central platform portal. Community and events live in Feed; Jobs and For Business quick cards stay on Home."}</p>
+      <section class="ecosystem-hero-panel">
+        <span class="ecosystem-kicker">${ru ? "Центр управления" : "Control center"}</span>
+        <h2>${ru ? "Всё важное в ANIMA - в одном месте." : "Everything important in ANIMA, one tap away."}</h2>
+        <p>${ru
+          ? "Быстрый доступ к городу, бонусам, карте, бизнес-инструментам и поддержке. Экран собран так, чтобы человек сразу понимал, куда идти дальше."
+          : "Quick access to the city, rewards, map, business tools and support. Built so the next action is obvious."}</p>
+        <div class="ecosystem-status-row" aria-label="${ru ? "Статусы экосистемы" : "Ecosystem status"}">
+          <span><strong>2,450</strong><small>ANIMA Points</small></span>
+          <span><strong>Live</strong><small>${ru ? "Городская лента" : "City feed"}</small></span>
+          <span><strong>Partner</strong><small>${ru ? "Готово к росту" : "Growth ready"}</small></span>
+        </div>
+      </section>
+      <section class="ecosystem-quick-grid" aria-label="${ru ? "Быстрые действия ANIMA" : "ANIMA quick actions"}">
+        ${quickActions.map(quickAction).join("")}
+      </section>
       <section class="ecosystem-grid" aria-label="${ru ? "Разделы экосистемы ANIMA" : "ANIMA Ecosystem sections"}">
         ${cards.map(card).join("")}
       </section>

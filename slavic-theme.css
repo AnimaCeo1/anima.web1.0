@@ -1,0 +1,122 @@
+:root {
+  --paper: #eee8db;
+  --ink: #1d1a14;
+  --moss: #2d3426;
+  --clay: #6e3f28;
+  --gold: #c8a35f;
+  --line: rgba(61, 47, 28, 0.24);
+}
+
+body {
+  background: var(--paper);
+}
+
+.site-header.is-scrolled,
+.inner-page .site-header {
+  background: rgba(21, 23, 17, 0.97);
+  border-bottom: 1px solid rgba(200, 163, 95, 0.32);
+}
+
+.home-hero {
+  border-bottom: 1px solid var(--gold);
+}
+
+.hero-photo {
+  background-image: url('/assets/anima/home/hero-slavic-banya-v2.jpg');
+  background-position: center center;
+}
+
+.hero-overlay {
+  background: rgba(12, 14, 10, 0.36);
+}
+
+.eyebrow,
+.world span,
+.steps span,
+.ritual-list span,
+.article-grid span,
+.product-grid span,
+.event-grid span {
+  color: var(--gold);
+}
+
+.intro {
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+
+.intro::after {
+  bottom: 30px;
+  color: #846d43;
+  content: 'ОГОНЬ  ·  ПАР  ·  ВЕНИК  ·  ВОДА  ·  ТРАВЫ  ·  МЁД';
+  font-size: 9px;
+  left: clamp(24px, 8vw, 130px);
+  letter-spacing: 0.2em;
+  position: absolute;
+}
+
+.experience,
+.site-footer {
+  background: #171a13;
+}
+
+.world {
+  border-color: rgba(200, 163, 95, 0.28);
+}
+
+.world h3,
+.page-section h2,
+.page-hero h1 {
+  font-variant-ligatures: common-ligatures;
+}
+
+.page-banya .page-hero {
+  background: #33251c;
+}
+
+.page-banya .visual-wide {
+  background-image: url('/assets/anima/banya/venik-steam-v2.jpg');
+  background-position: center;
+  background-size: cover;
+}
+
+.page-products .robe-feature .asset-placeholder {
+  background-image: url('/assets/anima/products/ritual-still-life-v2.jpg');
+  background-position: center;
+  background-size: cover;
+}
+
+.page-banya .visual-wide::after,
+.page-products .robe-feature .asset-placeholder::after {
+  content: '';
+}
+
+.page-banya .visual-wide::before,
+.page-products .robe-feature .asset-placeholder::before {
+  background: rgba(20, 15, 10, 0.08);
+}
+
+.page-section.alt {
+  background: #ddd5c5;
+}
+
+.page-cta {
+  background: #30382a;
+  border-top: 1px solid rgba(200, 163, 95, 0.45);
+}
+
+.button {
+  border-color: var(--gold);
+}
+
+@media (max-width: 780px) {
+  .hero-photo {
+    background-position: 64% center;
+  }
+
+  .intro::after {
+    bottom: 20px;
+    line-height: 1.8;
+    right: 20px;
+  }
+}
