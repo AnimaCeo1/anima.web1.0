@@ -4,6 +4,8 @@
   const app = window.ANIMA;
   if (!app) return;
 
+  const brandMark = '/assets/anima/brand/anima-tree.svg?v=2026-10-04-1';
+
   const body = document.body;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const currentPath = window.location.pathname.replace(/index\.html$/, '');
@@ -33,7 +35,7 @@
       const links = app.navigation.map((item) => `<a href="${item.href}" data-nav-key="${item.key}">${copy()[item.key]}</a>`).join('');
       header.innerHTML = `
         <a class="brand" href="/" aria-label="ANIMA Costa Brava">
-          <img class="brand-tree-image" src="/assets/anima-tree.svg" alt="" aria-hidden="true">
+          <img class="brand-tree-image" src="${brandMark}" alt="" aria-hidden="true">
           <span class="brand-lockup"><img src="/assets/anima-wordmark.png" alt="ANIMA"><small>Costa Brava</small></span>
         </a>
         <button class="menu-button" type="button" data-site-menu aria-label="${copy().menu}" aria-expanded="false"><span></span><span></span></button>
@@ -43,7 +45,7 @@
     }
     if (footer) {
       footer.innerHTML = `
-        <a class="brand brand-footer" href="/" aria-label="ANIMA Costa Brava"><img class="brand-tree-image" src="/assets/anima-tree.svg" alt="" aria-hidden="true"><span class="brand-lockup"><img src="/assets/anima-wordmark.png" alt="ANIMA"><small>Costa Brava</small></span></a>
+        <a class="brand brand-footer" href="/" aria-label="ANIMA Costa Brava"><img class="brand-tree-image" src="${brandMark}" alt="" aria-hidden="true"><span class="brand-lockup"><img src="/assets/anima-wordmark.png" alt="ANIMA"><small>Costa Brava</small></span></a>
         <div class="footer-meta"><p>${copy().location}</p><span>${app.config.address || 'Точная локация будет объявлена позже'}</span><small>${copy().legal}</small></div>
         <nav aria-label="Навигация в подвале"><a href="/about/">${copy().about}</a><a href="/journal/">${copy().journal}</a><a href="/contacts/">${copy().contacts}</a><a href="/booking/">${copy().booking}</a></nav>`;
     }
