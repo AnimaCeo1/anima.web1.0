@@ -1,3 +1,4 @@
 server.js
-data/
+data/anima-db.json
+data/planning-config.js
 .DS_Store
