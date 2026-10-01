@@ -34,6 +34,12 @@
   document.querySelectorAll('[data-services-list]').forEach((node) => {
     node.innerHTML = app.services.map((service) => `<a class="service-row" href="/booking/?service=${service.slug}"><div><h3>${escape(service.name)}</h3><p>${escape(service.description)}</p></div><strong>${escape(renderPrice(service))}</strong><span aria-hidden="true">→</span></a>`).join('');
   });
+  document.querySelectorAll('[data-home-services]').forEach((node) => {
+    const featuredServices = ['entry', 'banya-ceremony', 'massage-60', 'tea-ceremony', 'private']
+      .map((serviceSlug) => app.services.find((service) => service.slug === serviceSlug))
+      .filter(Boolean);
+    node.innerHTML = featuredServices.map((service) => `<a class="home-price-row" href="/booking/?service=${service.slug}"><div><h3>${escape(service.name)}</h3><p>${escape(service.description)}</p></div><strong>${escape(renderPrice(service))}</strong><span aria-hidden="true">→</span></a>`).join('');
+  });
   document.querySelectorAll('[data-home-products]').forEach((node) => {
     const featured = [app.products.find((item) => item.featured), ...app.products.filter((item) => !item.featured).slice(0, 3)].filter(Boolean);
     node.innerHTML = featured.map((product) => `<a href="/products/${product.slug}/"><img src="${product.image}" alt="${escape(product.name)}" loading="lazy" width="720" height="720"><span>${escape(product.category)}</span><h3>${escape(product.name)}</h3></a>`).join('');
